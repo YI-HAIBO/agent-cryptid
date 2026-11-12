@@ -1,0 +1,3 @@
+tier,size_B,issue_median_ms,issue_p95_ms,verify_median_ms,verify_p95_ms
+sm2,441,71.814,86.415,71.584,93.295
+sm9,522,402.938,484.575,383.817,516.715

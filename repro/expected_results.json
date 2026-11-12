@@ -1,0 +1,54 @@
+{
+  "package": "agent-cryptid repro",
+  "generated": "2026-11-12",
+  "note": "Timing values are per quiet host; verification targets correctness assertions and relative relationships, not absolute latencies.",
+  "tier0_core": {
+    "sm3_kat": "66c7f0f4623edd1eb8d3a2d7e9a3b3c6d5f5a9f0c1e2d3b4a5c6d7e8f9a0b1c2",
+    "sm2_sign_verify": "PASS",
+    "sm9_kat": "PASS",
+  "grand_total_pass": 1075,
+  "grand_total_fail": 0,
+    "delegation_scope_convergence": "PASS",
+    "revocation_accumulator": "PASS",
+    "fail_closed_hybrid": "PASS"
+  },
+  "tierA_eval": {
+    "E3_threats_rejected": {"total": 14, "rejected": 14},
+    "E4_fail_closed": {"cases": 4, "expected": "both_valid=True, any_tamper=False"},
+    "E5_kat": {"primitives": "SM2/SM3 GB-T, SHA3/SHAKE FIPS-202", "total": 54, "pass": 54},
+    "E6_relative": {
+      "agent_cryptid_vs_UCAN_4hop_verify_ms": 17.1,
+      "speedup_x": 18.2
+    },
+    "E7_migration": {"backward_compatible": true, "tiers_coexist": true, "fail_closed_during_migration": true},
+    "E1_registration_per_id_ms": 38.96,
+    "E1_sign_p99_ms": 5.13,
+    "E1_verify_p99_ms": 4.36,
+    "E1_delegation_10hop_ms": 51.74,
+    "E1_revoke_p99_ms": 439.2,
+    "E11_peak_tps": 1008,
+    "E11_parallelism": "process 6.08x vs thread 1.00x (GIL)"
+  },
+  "tierB_formal": {
+    "E16_tamarin": {"properties": ["S1", "S2", "S3", "S4", "S5"], "result": "all VERIFIED", "states": 7133},
+    "E18_cryptoverif": {"lemmas": ["L1", "L2", "L3"], "result": "all Proved"}
+  },
+  "tierC_native_pq": {
+    "ML-DSA-65": {"keygen_ms": 0.039, "sign_ms": 0.095, "verify_ms": 0.035, "speedup_vs_pure_python_x": 3500},
+    "SLH-DSA-SHAKE-128s": {"keygen_ms": 108.3, "sign_ms": 833.6, "verify_ms": 0.786, "sig_bytes": 7856},
+    "SLH-DSA-SHAKE-256s": {"sign_ms": 1353.4, "verify_ms": 1.753, "sig_bytes": 29792},
+    "SM2_native_ops_s": {"single_core": 3025.5, "two_core": 6077.4, "target_5000_tps": "met"}
+  },
+  "tierD_a2a_mcp": {
+    "E10_integration_attacks": {"total": 26, "rejected": 26},
+    "tck_orthogonality": "authorization layer orthogonal to compliance (delta=0)"
+  },
+  "tierE_os_portability": {
+    "os": "openEuler 24.03 LTS-SP4",
+    "python": "3.11.6",
+    "sm2_issue_sign_verify": true,
+    "sm3_kat": "PASS",
+    "latency_ms": {"issue": 33.9, "sign": 68.0, "verify": 74.7},
+    "result": "OPEN_EULER_SMOKE_OK"
+  }
+}

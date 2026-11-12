@@ -1,0 +1,6 @@
+scheme,size_B,issue_ms,verify_ms,delegation,revocation,pq
+JWT-like (single sig),220,67.447,81.688,无原生委派,短期过期/黑名单,否
+Macaroon (HMAC chain),163,3.86,3.763,链式衰减 O(跳数),根密钥轮换,否(对称HMAC)
+UCAN (chained sig, 4-hop),3438,278.351,312.025,链式签名 O(跳数),吊销列表/短期,否
+DID-VC (sig + status-list),276,69.994,75.511,浅/需扩展,状态列表(在线查),否
+agent-cryptid (SM2 tier),441,83.755,80.553,链式+scope收敛,累加器(离线证明),是(三档敏捷)

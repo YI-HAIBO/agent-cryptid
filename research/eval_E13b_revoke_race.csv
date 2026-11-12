@@ -1,0 +1,5 @@
+phase,n_attempt,n_ok,n_revoked
+before_serial,20,20,0
+during_before_revoke,7,7,0
+during_after_revoke,1110,0,1110
+after_serial,20,0,20

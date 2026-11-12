@@ -1,0 +1,3 @@
+role,contains_before,contains_after
+a,False,True
+b,True,True

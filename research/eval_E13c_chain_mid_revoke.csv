@@ -1,0 +1,5 @@
+target,ok,reason
+cred0_root,True,ok
+cred1_mid,False,revoked
+cred2_downstream,True,ok
+chain_verify,False,"hop 0: ok,hop 1: revoked,hop 2: ok"

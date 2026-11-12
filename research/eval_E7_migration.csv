@@ -1,0 +1,3 @@
+tier,verify_ok,verify_median_ms
+SM2 (迁移前存量),True,4.559
+SM2+ML-DSA (迁移后新签),True,68.324

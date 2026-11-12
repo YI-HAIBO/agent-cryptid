@@ -1,0 +1,3 @@
+tier,tampered_alg_tier,stripped_pq,verified_ok,reason
+sm2-ml-dsa,sm2,True,False,signature invalid
+hash-signature,sm2,True,False,missing signature

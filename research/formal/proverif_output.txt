@@ -1,0 +1,119 @@
+File "C:/Users/Yi/WorkBuddy/2026-10-09-07-28-12/agent-cryptid/research/formal/agent_cryptid.pv", line 165, characters 37-41:
+Warning: identifier scope rebound.
+File "C:/Users/Yi/WorkBuddy/2026-10-09-07-28-12/agent-cryptid/research/formal/agent_cryptid.pv", line 154, characters 35-39:
+Warning: identifier scope rebound.
+File "C:/Users/Yi/WorkBuddy/2026-10-09-07-28-12/agent-cryptid/research/formal/agent_cryptid.pv", line 117, characters 36-40:
+Warning: identifier scope rebound.
+File "C:/Users/Yi/WorkBuddy/2026-10-09-07-28-12/agent-cryptid/research/formal/agent_cryptid.pv", line 107, characters 35-39:
+Warning: identifier scope rebound.
+Process 0 (that is, the initial process):
+{1}out(cPK, pk(kISSUER));
+{2}out(cPK, pk(kISSUER2));
+{3}out(cPK, pk(kDELEG));
+(
+    {4}!
+    {5}in(cReq, (sub: idn,aud: idn,scope_1: scope));
+    {6}new n: nonce;
+    {7}event issueNonce(n);
+    {8}event beginIssue(sub,aud,scope_1);
+    {9}out(cCred, (sub,aud,scope_1,n,ALG,sign(enc(sub,aud,scope_1,n,ALG),kISSUER)))
+) | (
+    {10}!
+    {11}in(cPres, (sub_1: idn,aud_1: idn,scope_2: scope,n_1: nonce,alg: flag,sig: bitstring));
+    {12}if (checksign(sig,pk(kISSUER)) = enc(sub_1,aud_1,scope_2,n_1,alg)) then
+    {13}if (aud_1 = VID) then
+    {17}get seen(=n_1) in
+        0
+    else
+        {14}insert seen(n_1);
+        {15}event acceptNonce(n_1);
+        {16}event endVerify(sub_1,aud_1,scope_2)
+) | (
+    {18}!
+    {19}in(cDlReq, (delegatee: idn,aud_2: idn,childScope: scope,pscope: scope));
+    {20}if (subscope(childScope,pscope) = OKC) then
+    {21}new m: nonce;
+    {22}event beginDelegate(DELEGATOR,delegatee,childScope);
+    {23}out(cDl, (DELEGATOR,delegatee,aud_2,childScope,m,ALG,sign(enc(delegatee,aud_2,childScope,m,ALG),kDELEG)))
+) | (
+    {24}!
+    {25}in(cDl, (deleg: idn,delegatee_1: idn,aud_3: idn,childScope_1: scope,m_1: nonce,alg_1: flag,sig_1: bitstring));
+    {26}if (checksign(sig_1,pk(kDELEG)) = enc(delegatee_1,aud_3,childScope_1,m_1,alg_1)) then
+    {27}if (aud_3 = VID) then
+    {28}event endDelegate(deleg,delegatee_1,childScope_1)
+) | (
+    {29}!
+    {30}in(cReq, (sub_2: idn,aud_4: idn,scope_3: scope));
+    {31}new n_2: nonce;
+    {32}event issueNonce(n_2);
+    {33}event beginIssue(sub_2,aud_4,scope_3);
+    {34}out(cCredH, (sub_2,aud_4,scope_3,n_2,ALG,sign(enc(sub_2,aud_4,scope_3,n_2,ALG),kISSUER),sign(enc(sub_2,aud_4,scope_3,n_2,ALG),kISSUER2)))
+) | (
+    {35}!
+    {36}in(cPresH, (sub_3: idn,aud_5: idn,scope_4: scope,n_3: nonce,alg_2: flag,s1: bitstring,s2: bitstring));
+    {37}if (checksign(s1,pk(kISSUER)) = enc(sub_3,aud_5,scope_4,n_3,alg_2)) then
+    {38}if (checksign(s2,pk(kISSUER2)) = enc(sub_3,aud_5,scope_4,n_3,alg_2)) then
+    {39}if (aud_5 = VID) then
+    {43}get seen(=n_3) in
+        0
+    else
+        {40}insert seen(n_3);
+        {41}event acceptNonce(n_3);
+        {42}event endVerify(sub_3,aud_5,scope_4)
+)
+
+-- Query not attacker(kISSUER[]) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query not attacker(kISSUER[])
+RESULT not attacker(kISSUER[]) is true.
+-- Query not attacker(kISSUER2[]) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query not attacker(kISSUER2[])
+RESULT not attacker(kISSUER2[]) is true.
+-- Query not attacker(kDELEG[]) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query not attacker(kDELEG[])
+RESULT not attacker(kDELEG[]) is true.
+-- Query event(endVerify(x1,x2,s)) ==> event(beginIssue(x1,x2,s)) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query event(endVerify(x1,x2,s)) ==> event(beginIssue(x1,x2,s))
+goal reachable: b-event(beginIssue(x1,VID[],s)) && attacker(x1) && attacker(s) -> event(endVerify(x1,VID[],s))
+RESULT event(endVerify(x1,x2,s)) ==> event(beginIssue(x1,x2,s)) is true.
+-- Query inj-event(endDelegate(d1,d2,s)) ==> inj-event(beginDelegate(d1,d2,s)) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query inj-event(endDelegate(d1,d2,s)) ==> inj-event(beginDelegate(d1,d2,s))
+RESULT inj-event(endDelegate(d1,d2,s)) ==> inj-event(beginDelegate(d1,d2,s)) is true.
+-- Query event(acceptNonce(n_4)) ==> event(issueNonce(n_4)) in process 0.
+Translating the process into Horn clauses...
+Completing...
+Starting query event(acceptNonce(n_4)) ==> event(issueNonce(n_4))
+goal reachable: b-event(issueNonce(n_4)) && attacker(sub_4) && attacker(scope_5) -> event(acceptNonce(n_4))
+Abbreviations:
+n_4 = n_2[scope_3 = scope_5,aud_4 = VID[],sub_2 = sub_4,!1 = @sid]
+goal reachable: b-event(issueNonce(n_4)) && attacker(sub_4) && attacker(scope_5) -> event(acceptNonce(n_4))
+Abbreviations:
+n_4 = n[scope_1 = scope_5,aud = VID[],sub = sub_4,!1 = @sid]
+RESULT event(acceptNonce(n_4)) ==> event(issueNonce(n_4)) is true.
+
+--------------------------------------------------------------
+Verification summary:
+
+Query not attacker(kISSUER[]) is true.
+
+Query not attacker(kISSUER2[]) is true.
+
+Query not attacker(kDELEG[]) is true.
+
+Query event(endVerify(x1,x2,s)) ==> event(beginIssue(x1,x2,s)) is true.
+
+Query inj-event(endDelegate(d1,d2,s)) ==> inj-event(beginDelegate(d1,d2,s)) is true.
+
+Query event(acceptNonce(n_4)) ==> event(issueNonce(n_4)) is true.
+
+--------------------------------------------------------------
+

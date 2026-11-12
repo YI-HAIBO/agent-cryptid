@@ -1,0 +1,51 @@
+# =============================================================================
+# agent-cryptid — exact dependency lock (reproducibility)
+#
+# TIER 0 (CORE): NO mandatory third-party dependency.
+#   The entire proto/ package runs on Python 3.9+ stdlib only:
+#       python proto/entrypoint.py --check
+#   This is the headline reproducibility claim: the cryptographic core
+#   (SM2/SM3/SM9, credential, delegation, revocation, auth, persistence)
+#   is self-contained and needs no `pip install` at all.
+#
+# TIER A (Eval framework, research/eval_framework.py): OPTIONAL, graceful
+#   degradation if absent (both are wrapped in try/except in the source).
+matplotlib==3.11.2        # figures (HAVE_MPL); absent => no figures, results still valid
+# psutil==6.0.0           # hardware info in system_info(); absent => "n/a" (fine)
+
+# TIER B (E10 A2A/MCP integration): REQUIRES a dedicated venv (NOT this one).
+#   The main eval framework imports these lazily only for E10. Create a
+#   separate env so the core env stays dependency-free:
+#       python -m venv envs/a2amcp && envs/a2amcp/bin/pip install \
+#           a2a-sdk==1.2.3 mcp==2.3.0 mcp-types==2.3.0
+#   a2a-sdk==1.2.3
+#   mcp==2.3.0
+#   mcp-types==2.3.0
+
+# TIER C1 (Optional SM2/SM3 acceleration, proto/sm2_fast.py): OPTIONAL.
+#   Core sm2.py has a pure-Python fallback; sm2_fast uses gmssl when present.
+gmssl==3.2.2
+
+# TIER C2 (Optional Redis nonce store, proto/nonce_store.py): OPTIONAL.
+#   Used only when RedisBackend is selected; MemoryBackend is the default.
+# redis==6.0.0
+
+# TIER C3 (Optional OceanBase backend, proto/oceanbase_backend.py): OPTIONAL.
+#   Only needed for the OceanBase CE database-tier equivalence check (E11 §?).
+# PyMySQL==1.1.1
+
+# TIER D (Post-quantum primitives): 
+#   * Pure-Python prototypes (proto/mldsa.py, proto/slhdsa.py, proto/shake.py)
+#     are stdlib-only and are the ones exercised by `--check` and E5.
+#   * Native PQ (Section 5 "Scalability/Performance") was benchmarked against
+#     liboqs compiled from source on a quiet host. Reproduce via:
+#       git clone https://github.com/open-quantum-safe/liboqs && \
+#         cd liboqs && cmake -B build -DCMAKE_BUILD_TYPE=Release && \
+#         cmake --build build -j && sudo cmake --install build
+#     then link your benchmark against liboqs.a (+ -lcrypto -lpthread -lm).
+#   * Alternative Python bindings (NOT required for the paper numbers):
+dilithium-py==1.5.1       # ML-DSA reference (pure-Python KAT cross-check)
+# liboqs-python==0.16.0   # ctypes bindings (needs the liboqs shared lib)
+
+# Platform note: developed/tested on Python 3.11–3.13 (Linux x86_64, and
+# verified in an openEuler 24.03 LTS-SP4 chroot with Python 3.11.6).

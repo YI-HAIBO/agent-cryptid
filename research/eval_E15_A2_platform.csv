@@ -1,0 +1,3 @@
+operation,n,median_ms,q1_ms,q3_ms,min_ms,max_ms
+issue_credential,8,14.08,13.93,14.79,13.3,17.02
+verify_credential,8,15.21,14.13,17.41,12.29,17.54

@@ -1,0 +1,11 @@
+metric,value
+baseline_median_ms,4.303350000554929
+baseline_p99_ms,5.0808999985747505
+gated_median_ms,8.425250000072992
+gated_p99_ms,9.608000000298489
+overhead_ratio,1.957835174686357
+delegation_hops,3
+delegation_establish_ms,14.235200000257464
+delegation_verify_ms,13.68460000230698
+attack_blocked,8
+attack_total,8

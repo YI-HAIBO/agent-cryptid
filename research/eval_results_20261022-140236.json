@@ -1,0 +1,340 @@
+{
+  "system": {
+    "python": "3.13.14",
+    "os": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "cpu_count": 16,
+    "processor": "Intel64 Family 6 Model 165 Stepping 5, GenuineIntel",
+    "ram_gb": "n/a (psutil 未装)",
+    "cpu_freq_mhz": "n/a"
+  },
+  "load_probe_sm2_verify_ms": 74.461,
+  "E1": {
+    "registration": [
+      {
+        "identities": 200,
+        "total_ms": 34153.2,
+        "per_id_ms": 170.766,
+        "db_bytes": 303104,
+        "note": "实测"
+      }
+    ],
+    "credential_latency": [
+      {
+        "tier": "sm2",
+        "issue": {
+          "n": 50,
+          "median_ms": 87.508,
+          "p95_ms": 100.058,
+          "p99_ms": 103.433,
+          "mean_ms": 87.185
+        },
+        "verify": {
+          "n": 50,
+          "median_ms": 88.454,
+          "p95_ms": 108.969,
+          "p99_ms": 124.039,
+          "mean_ms": 89.349
+        }
+      }
+    ],
+    "credential_size_bytes": {
+      "sm2": 457
+    },
+    "delegation_depth": [
+      {
+        "depth": 1,
+        "chain_len": 2,
+        "verify": {
+          "n": 30,
+          "median_ms": 94.267,
+          "p95_ms": 110.966,
+          "p99_ms": 114.151,
+          "mean_ms": 94.404
+        }
+      },
+      {
+        "depth": 5,
+        "chain_len": 6,
+        "verify": {
+          "n": 30,
+          "median_ms": 118.474,
+          "p95_ms": 131.463,
+          "p99_ms": 139.468,
+          "mean_ms": 120.151
+        }
+      },
+      {
+        "depth": 10,
+        "chain_len": 11,
+        "verify": {
+          "n": 30,
+          "median_ms": 143.355,
+          "p95_ms": 152.332,
+          "p99_ms": 154.469,
+          "mean_ms": 144.285
+        }
+      }
+    ],
+    "revocation": [
+      {
+        "note": "quick 模式跳过撤销时序（revoke 全量快照瓶颈），请以 --full 在安静机测量"
+      }
+    ],
+    "revocation_proof_verify": {
+      "n": 200,
+      "median_ms": 0.0,
+      "p95_ms": 0.0,
+      "p99_ms": 0.001,
+      "mean_ms": 0.0
+    }
+  },
+  "E2": {
+    "ours": {
+      "sizes": {
+        "sm2": 449
+      },
+      "verify_latency": {
+        "sm2": {
+          "n": 50,
+          "median_ms": 93.936,
+          "p95_ms": 106.363,
+          "p99_ms": 120.066,
+          "mean_ms": 91.164
+        }
+      }
+    },
+    "baseline": [
+      {
+        "scheme": "X.509 (EC, 传统 PKI)",
+        "cred_size_B": 1200,
+        "verify_ms": 0.3,
+        "revocation": "CRL/OCSP (在线)",
+        "pq_ready": "否",
+        "hw_root": "可选(HSM)",
+        "source": "文献代表值-待核实"
+      },
+      {
+        "scheme": "SPIFFE/SPIRE (X.509-SVID)",
+        "cred_size_B": 1200,
+        "verify_ms": 0.5,
+        "revocation": "CA 轮换/在线",
+        "pq_ready": "否",
+        "hw_root": "可选",
+        "source": "CNCF SPIFFE perf suite (2025); cert verify ~0.5ms p50"
+      },
+      {
+        "scheme": "DID/VC (Ed25519+状态列表)",
+        "cred_size_B": 2500,
+        "verify_ms": 1.5,
+        "revocation": "状态列表(在线/链上)",
+        "pq_ready": "否",
+        "hw_root": "否",
+        "source": "MDPI Internet 2023 (IoT DID/VC); Ed25519 verify 1.5ms RPi"
+      },
+      {
+        "scheme": "OAuth2/OIDC + OPA",
+        "cred_size_B": 1000,
+        "verify_ms": 12.0,
+        "revocation": "令牌撤销/短期",
+        "pq_ready": "否",
+        "hw_root": "否",
+        "source": "Ory Hydra 2.0 benchmark; cached JWKS verify ~12ms p99"
+      },
+      {
+        "scheme": "agent-cryptid SM2",
+        "cred_size_B": 449,
+        "verify_ms": 93.936,
+        "revocation": "Merkle 累加器(离线证明)",
+        "pq_ready": "否",
+        "hw_root": "设计支持(FR1-06)",
+        "source": "本系统实测"
+      }
+    ]
+  },
+  "E3": {
+    "attacks": [
+      {
+        "threat": "重放攻击",
+        "attack": "同一凭证二次出示(record_nonce)",
+        "rejected": true,
+        "mechanism": "nonce 一次性(NonceStore)"
+      },
+      {
+        "threat": "跨服务挪用/受众混淆",
+        "attack": "以错误 audience 校验",
+        "rejected": true,
+        "mechanism": "aud 受众字段绑定+校验"
+      },
+      {
+        "threat": "签名伪造",
+        "attack": "翻转 SM2 签名分量 s",
+        "rejected": true,
+        "mechanism": "SM2 签名(ECDSA over ZA||M)"
+      },
+      {
+        "threat": "载荷篡改·越权scope",
+        "attack": "签发后扩大 scope",
+        "rejected": true,
+        "mechanism": "签名覆盖 scope"
+      },
+      {
+        "threat": "载荷篡改·主体替换",
+        "attack": "偷换凭证主体 sub",
+        "rejected": true,
+        "mechanism": "签名覆盖 sub"
+      },
+      {
+        "threat": "载荷篡改·延长期效",
+        "attack": "篡改 exp 延长有效期",
+        "rejected": true,
+        "mechanism": "签名覆盖 exp"
+      },
+      {
+        "threat": "缺失签名分量",
+        "attack": "删除 SM2 签名分量",
+        "rejected": true,
+        "mechanism": "签名存在性检查"
+      },
+      {
+        "threat": "委托权限越权",
+        "attack": "子级 scope 超出父级",
+        "rejected": true,
+        "mechanism": "委托 scope 收敛校验"
+      },
+      {
+        "threat": "委托链受众不匹配",
+        "attack": "以错误受众校验委托链",
+        "rejected": true,
+        "mechanism": "链上受众一致性"
+      },
+      {
+        "threat": "撤销绕过",
+        "attack": "撤销后仍尝试使用",
+        "rejected": true,
+        "mechanism": "累加器撤销+jti 黑名单"
+      },
+      {
+        "threat": "过期凭证",
+        "attack": "now 超过 exp",
+        "rejected": true,
+        "mechanism": "exp 时效检查"
+      },
+      {
+        "threat": "未生效凭证",
+        "attack": "now 早于 nbf",
+        "rejected": true,
+        "mechanism": "nbf 生效检查"
+      }
+    ],
+    "n_attacks": 12,
+    "all_rejected": true
+  },
+  "E4": {
+    "cases": {
+      "both_valid": true,
+      "sm2_tampered": false,
+      "mldsa_tampered": false,
+      "both_tampered": false
+    },
+    "expected": {
+      "both_valid": true,
+      "sm2_tampered": false,
+      "mldsa_tampered": false,
+      "both_tampered": false
+    },
+    "fail_closed_ok": true
+  },
+  "E5": {
+    "kat": [
+      {
+        "primitive": "SM2/SM3 (GB/T)",
+        "pass": 4,
+        "fail": 0,
+        "total": 4,
+        "ok": true
+      },
+      {
+        "primitive": "SHA3/SHAKE (FIPS 202)",
+        "pass": 5,
+        "fail": 0,
+        "total": 5,
+        "ok": true
+      }
+    ],
+    "all_ok": true
+  },
+  "E6": {
+    "baselines": [
+      {
+        "scheme": "JWT-like (single sig)",
+        "size_B": 220,
+        "issue_ms": 84.481,
+        "verify_ms": 103.06,
+        "delegation": "无原生委派",
+        "revocation": "短期过期/黑名单",
+        "pq": "否"
+      },
+      {
+        "scheme": "Macaroon (HMAC chain)",
+        "size_B": 163,
+        "issue_ms": 4.198,
+        "verify_ms": 4.418,
+        "delegation": "链式衰减 O(跳数)",
+        "revocation": "根密钥轮换",
+        "pq": "否(对称HMAC)"
+      },
+      {
+        "scheme": "UCAN (chained sig, 4-hop)",
+        "size_B": 3438,
+        "issue_ms": 337.08,
+        "verify_ms": 362.896,
+        "delegation": "链式签名 O(跳数)",
+        "revocation": "吊销列表/短期",
+        "pq": "否"
+      },
+      {
+        "scheme": "DID-VC (sig + status-list)",
+        "size_B": 276,
+        "issue_ms": 73.384,
+        "verify_ms": 82.579,
+        "delegation": "浅/需扩展",
+        "revocation": "状态列表(在线查)",
+        "pq": "否"
+      },
+      {
+        "scheme": "agent-cryptid (SM2 tier)",
+        "size_B": 441,
+        "issue_ms": 97.237,
+        "verify_ms": 97.385,
+        "delegation": "链式+scope收敛",
+        "revocation": "累加器(离线证明)",
+        "pq": "是(三档敏捷)"
+      }
+    ]
+  },
+  "E7": {
+    "coexistence": [
+      {
+        "tier": "SM2 (迁移前存量)",
+        "verify_ok": true,
+        "verify_median_ms": 97.729
+      },
+      {
+        "tier": "SM2+ML-DSA (迁移后新签)",
+        "verify_ok": true,
+        "verify_median_ms": 136.406
+      }
+    ],
+    "backward_compat": true,
+    "downgrade_strip_pq_blocked": true,
+    "downgrade_alg_blocked": true,
+    "migration_security_ok": true
+  },
+  "E10": {
+    "skipped": true,
+    "reason": "E10 需 a2amcp venv（a2a-sdk + mcp）：ModuleNotFoundError: No module named 'fastapi'"
+  },
+  "E11": null,
+  "generated_at": "20261022-140236"
+}

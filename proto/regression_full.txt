@@ -1,0 +1,744 @@
+
+=== check_sm2 ===
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_sm2_report.txt
+RESULT  PASS=17  FAIL=0
+
+=== check_v01 ===
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v01_report.txt
+RESULT  PASS=26  FAIL=0
+
+=== check_v1 ===
+PASS     T1 跨租户标识不可见
+PASS     T2a tenant A 撤销成功
+PASS     T2b tenant A 校验被拒 (revoked)
+PASS     T2c tenant B 校验仍通过
+PASS     T2d 撤销版本号按租户独立 (A=1, B=0)
+PASS     T3 tenant A 审计只见 A 的 issuer
+PASS     T3b tenant B 审计只见 B 的 issuer
+PASS     T3c 两条审计链都自洽
+PASS     T4a tenant A 策略更新成功
+PASS     T4b tenant B 策略不受影响
+PASS     T4c tenant A ttl 被策略截断
+PASS     T5a 恢复后 tenant A 的标识仍在
+PASS     T5b 恢复后撤销 jti 仍在
+PASS     T5c 恢复后策略保留 max_ttl_seconds=60
+PASS     T5d 恢复后 revoked 凭证仍被拒
+PASS     T7 tenant A 版本=2, tenant B 版本=0
+PASS     T8 identities 表物理共 4 行
+PASS     T8b revocations 表物理共 2 行 (均来自 A)
+PASS     T8c audit_log 有数据
+SUMMARY  check_v1 PASS=19 FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v1_report.txt
+RESULT  PASS=19  FAIL=0
+
+=== sm2_fast ===
+
+FastSigner 性能（60 字节消息，60 次）
+  签名       中位   2.36   P95   2.44   P99   2.54 ms  (≤50)
+  验签 热态  中位   2.94   P95   3.01   P99   3.04 ms  (≤5)  ZA命中
+  验签 冷态  中位   3.79   P95   3.84   P99   4.03 ms  (≤5)  ZA重算
+PASS  FastSigner 签名自洽（fast.verify）
+PASS  篡改消息后验签失败
+PASS  篡改 r 后验签失败
+PASS  篡改 s 后验签失败
+PASS  换标识后验签失败（ZA 绑定）
+PASS  no-ZA 路径自洽
+PASS  自研仿射 verify 接受 fast 签名
+PASS  fast.verify 接受自研仿射签名
+PASS  gmssl 签名可被 fast.verify 接受（互操作）
+PASS  签名 中位+P95 ≤ 50ms（PRD NFR-01）
+PASS  验签热态 中位+P95 ≤ 5ms（PRD NFR-02）
+PASS  验签冷态 中位+P95 ≤ 5ms（PRD NFR-02）
+
+RESULT  PASS=12  FAIL=0
+RESULT  PASS=12  FAIL=0
+
+=== revocation ===
+PASS  空累加器 version=0
+PASS  空累加器 total=0
+PASS  空累加器 root=None
+PASS  revoke#1 version=1
+PASS  revoke#1 leaf_index=0
+PASS  proof(jti-001) 非空
+PASS  proof(jti-001) 验证通过
+PASS  proof(jti-001) jti 匹配
+PASS  proof(jti-001) jti 不匹配则失败
+PASS  proof(未撤销 jti) 返回 None
+PASS  proof(jti-001) 验证通过
+PASS  proof(jti-002) 验证通过
+PASS  proof(jti-003) 验证通过
+PASS  snapshot total=3
+PASS  snapshot version=3
+PASS  snapshot root 非空
+PASS  独立验证：最新 root 可验证证明
+PASS  篡改 leaf_hash 后验证失败
+PASS  篡改 sibling_path 后验证失败
+PASS  篡改 root 后验证失败
+PASS  填至满时 frozen_roots=0
+PASS  第 9 次撤销触发冻结
+PASS  冻结后 count=1
+PASS  冻结后 version=9
+PASS  冻结后 frozen_roots=1
+PASS  冻结后 total=9
+PASS  非 2 的幂 capacity 应拒绝
+PASS  重复 revoke 应拒绝
+PASS  state_dict → load_state 恢复成功
+PASS  恢复后 version 一致
+PASS  恢复后 count 一致
+PASS  恢复后根一致
+PASS  恢复后 proof(jti-009) 可验证
+PASS  恢复后 jti 索引完整
+PASS  容量不匹配应拒绝恢复
+PASS  损坏状态应拒绝恢复且不抛异常
+
+RESULT  PASS=36  FAIL=0
+RESULT  PASS=36  FAIL=0
+
+=== check_v2 ===
+PASS     A revoke 同步累加器
+PASS     B 快照含累加器根
+PASS     C 证明可独立验证
+PASS     D 未撤销返回 False
+PASS     E 跨租户隔离
+PASS     F 凭证校验兼容
+PASS     G 证明篡改检测
+PASS     H 持久化往返
+PASS     I 累加器重启恢复
+
+RESULT  PASS=9  FAIL=0
+RESULT  PASS=9  FAIL=0
+
+=== nonce_store ===
+PASS  MemoryNonceStore 基础 add/contains
+PASS  MemoryNonceStore 过期失效
+PASS  MemoryNonceStore __len__
+PASS  MemoryNonceStore cleanup
+PASS  SqliteNonceStore 基础
+PASS  SqliteNonceStore 过期失效
+PASS  SqliteNonceStore __len__
+PASS  SqliteNonceStore 跨连接持久化
+PASS  RedisNonceStore（跳过：未装 redis 库）
+
+RESULT  PASS=9  FAIL=0
+RESULT  PASS=9  FAIL=0
+
+=== check_v3 ===
+PASS     I MemoryNonceStore 默认
+PASS     J Sqlite 跨实例共享
+PASS     K Sqlite 持久化
+PASS     L nonce_ttl 过期
+PASS     M record_nonce=False 不入
+PASS     N 多租户隔离
+
+RESULT  PASS=6  FAIL=0
+RESULT  PASS=6  FAIL=0
+
+=== asgi_app ===
+PASS     asgi GET /health
+PASS     asgi POST /v1/identities
+PASS     asgi POST /v1/credentials
+PASS     asgi POST /v1/credentials/verify
+PASS     asgi POST /v1/revocations
+PASS     asgi GET /v1/revocations
+PASS     asgi GET /v1/revocations/prove
+PASS     asgi GET /v1/audit
+PASS     asgi POST /v1/policy
+PASS     asgi 404 not found
+PASS     asgi 405 method not allowed
+PASS     asgi 跨租户 t2 审计为空
+PASS     asgi 鉴权开启·本租户放行
+PASS     asgi 鉴权开启·缺 key → 401
+PASS     asgi 鉴权开启·错 key → 401
+PASS     asgi 鉴权开启·跨租户 → 403
+PASS     asgi 鉴权开启·管理员通配放行
+PASS     asgi 鉴权开启·越权写入被拒
+
+RESULT  PASS=18  FAIL=0
+RESULT  PASS=18  FAIL=0
+
+=== audit_anchor ===
+PASS  锚点签名后 sig_r 非空
+PASS  锚点签名后 sig_s 非空
+PASS  正确公钥验证通过
+PASS  错误公钥验证失败
+PASS  未签名锚点验证失败
+PASS  篡改 root_hash 后验证失败
+PASS  篡改 ts 后验证失败
+PASS  篡改 chain_len 后验证失败
+PASS  Store 加入 3 个锚点
+PASS  list 按时间倒序
+PASS  latest 返回最新
+PASS  list since_ts 过滤
+PASS  序列化往返后可验证
+PASS  payload 稳定
+
+RESULT  PASS=14  FAIL=0
+RESULT  PASS=14  FAIL=0
+
+=== check_v4 ===
+PASS     O anchor 创建自洽
+PASS     P 多次锚点递增
+PASS     Q 篡改检测
+PASS     R 未知 issuer 拒绝
+PASS     S 多租户隔离
+PASS     T 未签名验证失败
+PASS     U list/latest 语义
+
+RESULT  PASS=7  FAIL=0
+RESULT  PASS=7  FAIL=0
+
+=== check_v5 ===
+PASS     V 持久化+重启恢复
+PASS     W anchor_id 连续
+PASS     X latest 重启后正确
+PASS     Y 多租户持久化隔离
+PASS     Z 重启后签名可验证
+
+RESULT  PASS=5  FAIL=0
+RESULT  PASS=5  FAIL=0
+
+=== check_v6 ===
+PASS     AA 状态直接恢复
+PASS     AB jti 索引完整
+PASS     AC 多租户状态隔离
+PASS     AD 退化 replay 等价
+PASS     AE 冻结树状态恢复
+
+RESULT  PASS=5  FAIL=0
+RESULT  PASS=5  FAIL=0
+
+=== auth ===
+PASS  摘要长度为 64 hex
+PASS  两个 key 摘要不同
+PASS  本租户 key 放行
+PASS  跨租户访问被拒
+PASS  反向跨租户也被拒
+PASS  缺失 key 被拒
+PASS  空 key 被拒
+PASS  未知 key 被拒
+PASS  近似 key 被拒
+PASS  管理员可操作任意租户
+PASS  tenants_of 返回通配
+PASS  未启用时全放行
+PASS  空表视为未启用
+PASS  from_config(None) → None
+PASS  from_config(enabled=false) → None
+PASS  from_config 无 keys → None
+PASS  from_config 正常构造
+PASS  from_config 后校验生效
+PASS  配置里不含明文 key
+PASS  配置里含摘要
+PASS  SM3 摘要确定性
+PASS  不同 key 摘要不同
+
+RESULT  PASS=22  FAIL=0
+RESULT  PASS=22  FAIL=0
+
+=== sm9 ===
+PASS  参数 q 由 t 推算一致
+PASS  参数 N 由 t 推算一致
+PASS  迹 tr 由 t 推算一致
+PASS  cf=1 自检：q + 1 - tr == N
+PASS  P1 在 E: y^2=x^3+5 上
+PASS  P2 在 E': y^2=x^3+5u 上
+PASS  F_q^2: u^2 == -2
+PASS  F_q^2: a * a^-1 == 1
+PASS  F_q^2: 乘法交换律
+PASS  F_q^2: 加法结合律
+PASS  G1: P1 + (-P1) == O
+PASS  G1: [N]P1 == O
+PASS  G1: [2]P1 == P1+P1
+PASS  G2: P2 + (-P2) == O
+PASS  G2: [N]P2 == O
+PASS  G2: [2]P2 == P2+P2
+PASS  KAT t1 = (ks + h1) mod N
+PASS  KAT t2 = ks * t1^-1 mod N
+PASS  KAT ds_A = [t2]P1
+PASS  KAT P_pub = [ks]P2
+PASS  KAT P_pub 在扭曲线上
+PASS  KAT H1(Bob, hid=3)
+PASS  SM9 自签自验
+PASS  SM9 篡改消息失败
+PASS  SM9 篡改 h 失败
+PASS  SM9 换 ID 失败
+PASS  SM9 签名序列化往返
+PASS  SM9 签名字节长度 97
+
+RESULT  PASS=28  FAIL=0
+RESULT  PASS=28  FAIL=0
+
+=== check_v7 ===
+[A] IdentityAuthority SM9 初始化
+  PASS  IA 持有 ks 主私钥
+  PASS  IA 持有 P_pub 主公钥
+  PASS  P_pub 由 [ks]P2 派生
+[B] IdentityAuthority 签名闭环
+  PASS  sign_sm9 返回 (h, S)
+  PASS  verify_id_sm9 闭环通过
+  PASS  篡改消息失败
+  PASS  换 ID 失败
+[C] Credential SM9 分派
+  PASS  Credential SM9 签发+校验
+  PASS  SM9 篡改 scope 失败
+  PASS  SM9 篡改 alg_tier 失败
+[D] 双档并存 + 防降级
+  PASS  SM2 签发+校验仍正常
+  PASS  SM9 凭证用 SM2 公钥验失败
+[E] Platform SM9 集成
+  PASS  SM9 wire sig_r 存在
+  PASS  SM9 wire sig_s_x 存在
+  PASS  Platform verify_credential SM9 通过
+  PASS  篡改 aud 后校验失败
+  PASS  撤销后校验失败
+[F] 策略与向后兼容
+  PASS  Platform 默认策略允许 SM9
+  PASS  Platform SM2 签发仍正常
+  PASS  Platform SM2 校验仍正常
+
+============================================================
+PASS  IA 持有 ks 主私钥
+PASS  IA 持有 P_pub 主公钥
+PASS  P_pub 由 [ks]P2 派生
+PASS  issue_sm9 返回 G1 点
+PASS  sign_sm9 返回 (h, S)
+PASS  verify_id_sm9 闭环通过
+PASS  篡改消息失败
+PASS  换 ID 失败
+PASS  Credential SM9 签发+校验
+PASS  SM9 篡改 scope 失败
+PASS  SM9 篡改 alg_tier 失败
+PASS  SM2 签发+校验仍正常
+PASS  SM9 凭证用 SM2 公钥验失败
+PASS  Platform issue_credential SM9
+PASS  SM9 wire sig_r 存在
+PASS  SM9 wire sig_s_x 存在
+PASS  Platform verify_credential SM9 通过
+PASS  篡改 aud 后校验失败
+PASS  撤销后校验失败
+PASS  Platform 默认策略允许 SM9
+PASS  Platform SM2 签发仍正常
+PASS  Platform SM2 校验仍正常
+
+RESULT  PASS=22  FAIL=0
+RESULT  PASS=22  FAIL=0
+
+=== check_v8 ===
+
+=== [A] HTTP API SM9 凭证端到端 ===
+PASS     HTTP A1 注册 issuer 身份
+PASS     HTTP A2 注册 subject 身份
+PASS     HTTP A3 策略允许 SM9
+PASS     HTTP A4 SM9 凭证签发 200
+PASS     HTTP A5 wire 含 sig_s_x
+PASS     HTTP A6 wire 含 sig_s_y
+PASS     HTTP A7 wire 无 sig_s（SM9 用元组）
+PASS     HTTP A8 wire alg_tier=sm9
+PASS     HTTP A9 SM9 凭证回环校验通过
+PASS     HTTP A10 SM9 wire 篡改 alg_tier → 拒绝
+PASS     HTTP A11 SM9 wire 篡改 scope → 拒绝
+
+=== [B] HTTP API SM9 委托 ===
+PASS     HTTP B1 SM2 根凭证签发
+PASS     HTTP B2 SM9 委托签发
+PASS     HTTP B3 SM2+SM9 混合链验证通过
+PASS     HTTP B4 SM9 委托重复签发不冲突（各自 jti）
+
+=== [C] HTTP API SM9 链篡改检测 ===
+PASS     HTTP C1 篡改 SM9 sig_s_x → 链校验失败
+PASS     HTTP C2 篡改 SM9 alg_tier → 链校验失败
+
+=== [D] ASGI SM9 端到端 ===
+PASS     ASGI D1 注册 issuer
+PASS     ASGI D2 注册 subject
+PASS     ASGI D3 策略允许 SM9
+PASS     ASGI D4 SM9 签发
+PASS     ASGI D5 wire 有 sig_s_x/sig_s_y
+PASS     ASGI D6 SM9 校验通过
+
+=== [E] ASGI 混合链验证 ===
+PASS     ASGI E1 hop0 SM2
+PASS     ASGI E2 hop1 SM9 委托
+PASS     ASGI E3 混合链验证通过
+
+=== [F] SM9 凭证持久化 ===
+PASS     F1 SM9 签发（持久化后端）
+PASS     F2 同一实例 SM9 校验通过
+PASS     F3 SM9 撤销成功
+PASS     F4 重启后 SM9 撤销状态保留
+PASS     F5 SM9 撤销累加器可查
+
+=== [G] 多租户 SM9 隔离 ===
+PASS     G1 tA SM9 签发
+PASS     G2 tA 凭证在 tB 校验失败
+PASS     G3 tB SM9 签发
+PASS     G4 tB SM9 校验通过
+PASS     G5 tA 与 tB P_pub 不同（IA 独立）
+
+=== [H] 策略拒绝未启用的 SM9 ===
+PASS     H1 策略只允许 SM2 → SM9 签发拒绝
+
+============================================================
+PASS 37 / FAIL 0
+RESULT  PASS=37  FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v8_report.txt
+RESULT  PASS=37  FAIL=0
+
+=== check_v9 ===
+
+=== [A] FR4-02 按标识批量撤销 ===
+PASS     A1 签发 3 张凭证
+PASS     A2 撤销前全部校验通过
+PASS     A3 revoke_by_identity 成功
+PASS     A4 撤销 2 张凭证
+PASS     A5 返回 jti 列表
+PASS     A6 撤销后全部校验失败
+PASS     A7 撤销原因记录在审计中
+
+=== [B] HTTP /v1/revocations/by-identity ===
+PASS     B1 HTTP 签发凭证
+PASS     B2 HTTP 按标识撤销成功
+PASS     B3 撤销数量为 1
+PASS     B4 撤销后 HTTP 校验失败
+PASS     B5 未知标识撤销返回 400
+
+=== [C] 撤销下游委托级联 ===
+PASS     C1 root 撤销并级联 2 张凭证
+PASS     C2 根凭证校验失败
+PASS     C3 下游委托被级联废止
+
+=== [D] NFR-03 委托链验证性能 ===
+PASS     D1 10 跳委托链验证通过
+PASS     D2 10 跳验证 ≤100ms (NFR-03)
+PASS     D3 20 跳委托链验证通过
+PASS     D4 20 跳验证基准
+
+=== [E] 撤销原因透传 ===
+PASS     E1 撤销原因 key_compromise_detected 在审计中
+
+============================================================
+PASS 20 / FAIL 0
+RESULT  PASS=20  FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v9_report.txt
+RESULT  PASS=20  FAIL=0
+
+=== check_v10 ===
+
+=== [A] 签发侧收敛（parent_cred） ===
+PASS     A1 父凭证签发成功
+PASS     A2 子级作用域收敛时签发成功
+PASS     A2b 返回 parent_verified=True
+PASS     A3 子级作用域越权被拒绝
+PASS     A3b 拒绝原因 scope escalation
+PASS     A3c 返回越权项 c:write
+PASS     A4 父凭证不属于委托方被拒绝
+PASS     A4b 拒绝原因 parent credential not held by delegator
+PASS     A5 父凭证受众不一致被拒绝
+PASS     A5b 拒绝原因 parent audience mismatch
+PASS     A6 父凭证已撤销后不得派生
+PASS     A6b 拒绝原因 parent credential revoked
+PASS     A7 非法父凭证格式被拒绝
+PASS     A7b 拒绝原因 invalid parent credential
+
+=== [A8] 有效期截断（FR3-05） ===
+PASS     A8 子级 ttl 超父级时签发成功
+PASS     A8b 标记 exp_truncated
+PASS     A8c 子级 exp 被截断到父级
+PASS     A8d 子级 ttl 更短时不截断
+PASS     A8e 审计记录含 parent_verified 字段
+
+=== [B] 验链侧收敛（verify_chain） ===
+PASS     B1 收敛链验证通过
+PASS     B2 子级作用域越权验链失败
+PASS     B2b 失败原因含 scope escalation
+PASS     B3 子级有效期超父级验链失败
+PASS     B3b 失败原因含 exp exceeds parent
+PASS     B4 完全越权作用域验链失败
+
+=== [C] Platform 委托链端到端收敛 ===
+PASS     C1 逐级收敛签发全部成功
+PASS     C2 收敛链验证通过
+PASS     C3 权限交集为末端 scope
+PASS     C4 链长为 3
+PASS     C5 请求超出交集时 scope_satisfied=False
+
+=== [D] 边界条件 ===
+PASS     D1 子级 scope 与父相等允许
+PASS     D2 相等 scope 链验证通过
+PASS     D3 相等 ttl 不触发越权判定
+PASS     D4 空作用域是任意父级的子集
+
+=== [E] 向后兼容 ===
+PASS     E1 不传 parent_cred 仍可签发
+PASS     E2 标记 parent_verified=False
+PASS     E3 返回不含 exp_truncated 截断
+
+============================================================
+PASS 37 / FAIL 0
+RESULT  PASS=37  FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v10_report.txt
+RESULT  PASS=37  FAIL=0
+
+=== check_v11 ===
+
+=== [A] FR1-03 标识重新启用 ===
+PASS     A1 停用成功
+PASS     A2 停用后签发被拒
+PASS     A2b 拒绝原因 issuer disabled
+PASS     A3 重新启用成功
+PASS     A4 重新启用后密钥对未变（非换身份）
+PASS     A4b pub_x 与注册时一致
+PASS     A5 重新启用后可签发凭证
+PASS     A6 重新启用后签发的凭证可校验
+PASS     A7 对已启用标识再 enable 被拒
+PASS     A7b 拒绝原因 already active
+PASS     A8 未知标识 enable 被拒
+PASS     A8b 拒绝原因 unknown identity
+PASS     A9 重新启用后 disable_reason 已清空
+PASS     A9b disabled_at 保留为历史痕迹
+PASS     A10 审计含 identity.enable 事件
+
+=== [B] FR1-03 持久化重启 ===
+PASS     B1 停用已持久化
+PASS     B2 重启后仍为 active
+PASS     B3 重启后密钥对一致
+PASS     B4 重启后可正常签发
+
+=== [C] FR1-03 HTTP 路由 ===
+PASS     C1 HTTP 停用成功
+PASS     C2 HTTP 重新启用成功
+PASS     C3 返回 status=active
+PASS     C4 HTTP 未知标识 enable 返回 400
+
+=== [D] FR4-02 下游委托级联撤销 ===
+PASS     D1 4 跳链构造成功
+PASS     D2 撤销前整链验证通过
+PASS     D3 从根撤销 4 张凭证
+PASS     D4 级联后整链验证失败
+PASS     D5 每一跳单独校验均失败
+
+=== [D6] 从中间节点撤销 ===
+PASS     D6 从中间撤销 3 张（含其持有的与其派生的）
+PASS     D7 上游根凭证不受影响
+PASS     D8 该节点持有的凭证被废
+
+=== [E] FR4-02 级联边界 ===
+PASS     E1 cascade=False 只撤 1 张
+PASS     E2 cascade=False 时下游委托仍有效
+PASS     E3 再撤 h1 级联收编下游
+PASS     E4 下游委托最终被废
+PASS     E5 未知标识撤销被拒
+PASS     E5b 拒绝原因 unknown identity
+PASS     E6 重复撤销幂等（实际撤销 0）
+
+=== [E7] 重启后级联能力保留 ===
+PASS     E7 重启后重建凭证血缘
+PASS     E8 重启后级联撤销 2 张
+PASS     E9 重启后下游委托被废
+PASS     E10 根凭证也被废
+
+============================================================
+PASS 42 / FAIL 0
+RESULT  PASS=42  FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v11_report.txt
+RESULT  PASS=42  FAIL=0
+
+=== check_v12 ===
+
+=== [A] 基础工具调用鉴权 ===
+PASS     A1 作用域匹配时放行
+PASS     A2 返回所需作用域
+PASS     A3 返回授予作用域
+PASS     A4 返回主体 sub
+PASS     A5 返回授权源头 origin
+PASS     A5b 单凭证无委托时 act 等于 sub（防混淆代理人）
+PASS     A6 返回撤销句柄 jti
+PASS     A7 作用域不足拒绝
+PASS     A7b 拒绝原因 insufficient scope
+PASS     A8 未登记工具拒绝（fail-closed）
+PASS     A8b 拒绝原因 tool not registered
+PASS     A9 缺凭证拒绝
+PASS     A9b 拒绝原因 missing credential
+PASS     A10 受众不符拒绝（防跨服务挪用）
+
+=== [B] 撤销后工具调用立即失效 ===
+PASS     B1 撤销前放行
+PASS     B2 撤销后拒绝
+PASS     B2b 拒绝原因含 revoked
+PASS     B3 新凭证放行
+PASS     B4 按标识撤销后拒绝
+PASS     B5 标识停用后无法签发新凭证
+PASS     B6 重新启用后可签发
+PASS     B7 重新启用后新凭证可调用工具
+
+=== [C] 委托链与级联撤销下的工具调用 ===
+PASS     C1 委托链调用放行
+PASS     C2 主体是末端 worker
+PASS     C3 授权源头是链根 root
+PASS     C3b 代表方是委托方 orch（防混淆代理人）
+PASS     C4 链长 2
+PASS     C5 链上权限不足拒绝
+PASS     C6 级联撤销后委托链调用拒绝
+PASS     C7 撤销后可见工具为空
+
+=== [D] 资源读取鉴权 ===
+PASS     D1 资源读取放行
+PASS     D2 记录资源标识
+PASS     D3 缺 resource:read 拒绝
+PASS     D4 自定义所需作用域放行
+PASS     D5 缺凭证拒绝
+
+=== [E] SM9 无证书凭证走 MCP ===
+PASS     E1 SM9 凭证签发成功
+PASS     E2 SM9 凭证工具调用放行
+PASS     E3 SM9 凭证越权拒绝
+
+=== [F] 边界与失败关闭 ===
+PASS     F1 握手 initialize 放行
+PASS     F1 握手 ping 放行
+PASS     F2 未知方法拒绝
+PASS     F2b 拒绝原因 unsupported method
+PASS     F3 无权凭证看不到任何工具
+PASS     F4 未登记工具不暴露
+PASS     F5 once 模式首次放行
+PASS     F6 once 模式二次拒绝
+PASS     F7 per-request 不同工具各放行一次
+PASS     F8 per-request 相同请求重放拒绝
+PASS     F8b 拒绝原因 replay detected
+PASS     F9 请求指纹按工具区分
+PASS     F10 空受众构造被拒
+PASS     F11 鉴权决策全部入审计
+PASS     F12 拒绝决策同样入审计
+
+============================================================
+PASS 53 / FAIL 0
+RESULT  PASS=53  FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v12_report.txt
+RESULT  PASS=53  FAIL=0
+
+=== check_v13 ===
+
+=== [A] 报表结构与元信息 ===
+PASS     A1 含报告编号
+PASS     A2 测评依据为 GB/T 39786
+PASS     A3 系统名称透传
+PASS     A4 测评机构透传
+PASS     A5 租户记录
+PASS     A6 含报告期间
+PASS     A7 六大字段齐备
+
+=== [B] 密码算法合规性证据 ===
+PASS     B1 含 SM2
+PASS     B2 含 SM3
+PASS     B3 不因未启用而列 SM9
+PASS     B4 SM2 标注国标号
+PASS     B4 SM3 标注国标号
+PASS     B5 无国际算法
+PASS     B6 启用后含 SM9
+
+=== [C] 密钥管理证据 ===
+PASS     C1 密钥管理含 generation
+PASS     C1 密钥管理含 storage
+PASS     C1 密钥管理含 distribution
+PASS     C1 密钥管理含 update
+PASS     C1 密钥管理含 destruction
+PASS     C1 密钥管理含 backup_recovery
+PASS     C2 声明私钥不落盘
+PASS     C3 诚实标注密钥轮换缺口
+
+=== [D] 运行统计准确性 ===
+PASS     D1 标识总数正确
+PASS     D2 凭证签发计数正确
+PASS     D3 凭证校验计数正确
+PASS     D4 委托签发计数正确
+PASS     D5 委托链验证计数正确
+PASS     D6 撤销记录计数正确
+PASS     D7 审计链条目数非空
+PASS     D8 锚点计数正确
+PASS     D9 MCP 鉴权计数正确
+PASS     D10 审计事件分类齐全
+PASS     D11 停用标识计入统计
+
+=== [E] 三项密评指标 ===
+PASS     E1 覆盖身份鉴别
+PASS     E2 覆盖访问控制
+PASS     E3 覆盖不可否认性
+PASS     E4 三项指标与声称一致
+PASS     E5 身份鉴别 含标准要求
+PASS     E6 身份鉴别 含实现措施
+PASS     E7 身份鉴别 含测评方法
+PASS     E8 身份鉴别 含证据
+PASS     E9 身份鉴别 含测评结果
+PASS     E5 访问控制 含标准要求
+PASS     E6 访问控制 含实现措施
+PASS     E7 访问控制 含测评方法
+PASS     E8 访问控制 含证据
+PASS     E9 访问控制 含测评结果
+PASS     E5 不可否认性 含标准要求
+PASS     E6 不可否认性 含实现措施
+PASS     E7 不可否认性 含测评方法
+PASS     E8 不可否认性 含证据
+PASS     E9 不可否认性 含测评结果
+PASS     E10 完整证据下身份鉴别符合
+PASS     E11 完整证据下访问控制符合
+PASS     E12 完整证据下不可否认性符合
+
+=== [F] 完整性证明可独立复核 ===
+PASS     F1 审计链自洽
+PASS     F2 审计链根哈希非空
+PASS     F3 审计链只可追加
+PASS     F4 链长与平台一致
+PASS     F5 锚点已采集
+PASS     F6 最新锚点验签通过
+PASS     F7 锚点承诺链根非空
+PASS     F8 撤销累加器根非空
+PASS     F9 撤销证明抽样验证通过
+PASS     F10 抽样 jti 非空
+PASS     F11 累加器根与平台快照一致
+
+=== [G] 导出文件 ===
+PASS     G1 导出三份文件
+PASS     G2 文件存在且非空 AC-CR-20261013-080357.md
+PASS     G2 文件存在且非空 AC-CR-20261013-080357.json
+PASS     G2 文件存在且非空 AC-CR-20261013-080357.csv
+PASS     G3 Markdown 含标题
+PASS     G4 Markdown 含算法表
+PASS     G5 Markdown 含指标表
+PASS     G6 Markdown 含结论
+PASS     G7 JSON 含 indicators
+PASS     G8 JSON 可回读为 UTF-8
+PASS     G9 CSV 表头正确
+PASS     G10 CSV 三行指标
+
+=== [H] 证据不足时不得写符合 ===
+PASS     H1 空平台身份鉴别判不适用
+PASS     H2 空平台列出缺口
+PASS     H3 空平台不可否认性不为符合
+PASS     H4 符合率不为 100%
+PASS     H5 缺 MCP 证据时访问控制部分符合
+PASS     H6 缺口点名 MCP
+PASS     H7 审计链被篡改时不可否认性不为符合
+PASS     H8 缺口点名自洽性
+
+=== [I] 边界 ===
+PASS     I1 空平台可生成报表（不崩）
+PASS     I2 空平台时间为占位符
+PASS     I3 空平台三种格式均可产出
+PASS     I4 空平台统计为零
+PASS     I5 指定期间被采用
+PASS     I6 重复采集结论一致
+
+============================================================
+PASS 92 / FAIL 0
+RESULT  PASS=92  FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v13_report.txt
+RESULT  PASS=92  FAIL=0
+
+=== platform smoke ===
+RESULT  PASS=10  FAIL=0
+
+=== http_api smoke ===
+RESULT  PASS=24  FAIL=0
+
+============================================================
+GRAND TOTAL  PASS=570  FAIL=0
+============================================================

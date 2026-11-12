@@ -1,0 +1,7 @@
+test,result
+fast.sign → fast.verify (self),True
+slow.sign → slow.verify (self),True
+fast.sign → slow.verify (cross),True
+slow.sign → fast.verify (cross),True
+fast rejects tampered,True
+slow rejects tampered,True

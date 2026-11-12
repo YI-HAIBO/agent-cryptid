@@ -1,0 +1,9 @@
+threat,attack,boundary,rejected,mechanism,detail
+token passthrough,MCP token for aud=A replayed to server B,MCP TokenVerifier,True,audience binding (aud == server expected aud),
+token passthrough,MCP-audience token replayed to A2A agent,A2A middleware,True,audience binding (aud == agent expected aud),http=401
+multi-hop scope escalation,child delegation scope ⊊ parent, attempted at issuance,delegation issue,True,scope convergence enforced at sign-side (child ⊆ parent),reason=scope escalation
+multi-hop scope escalation,over-scoped child in chain, requesting escalated scope,delegation chain verify,True,scope intersection (effective ⊆ parent) at chain verify,scope_ok=False
+confused deputy,downstream forges act=root to impersonate delegator (MCP),MCP TokenVerifier,True,sub/act/origin covered by signature; tampering → signature invalid,
+confused deputy,downstream forges act=root to impersonate delegator (A2A),A2A middleware,True,sub/act/origin covered by signature; tampering → signature invalid,http=401
+algorithm downgrade,strip pq_sig from hybrid sm2-ml-dsa credential (MCP),MCP TokenVerifier,True,PQ component fail-closed (missing pq_sig → signature invalid),
+algorithm downgrade,strip pq_sig from hybrid sm2-ml-dsa credential (A2A),A2A middleware,True,PQ component fail-closed (missing pq_sig → signature invalid),http=401

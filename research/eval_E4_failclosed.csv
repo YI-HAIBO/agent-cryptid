@@ -1,0 +1,5 @@
+case,result,expected
+both_valid,True,True
+sm2_tampered,False,False
+mldsa_tampered,False,False
+both_tampered,False,False

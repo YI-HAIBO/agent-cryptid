@@ -1,0 +1,3 @@
+primitive,pass,fail,total,ok
+SM2/SM3 (GB/T),4,0,4,True
+SHA3/SHAKE (FIPS 202),5,0,5,True

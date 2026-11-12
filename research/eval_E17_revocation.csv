@@ -1,0 +1,5 @@
+test,result_bool,reasons,note
+normal_chain_verify,True,,
+escalation_attempt_ok,False,scope escalation,scope escalation blocked
+revoke_root_latency_ms,504.136,,
+after_revoke_chain_verify,False,hop 0: revoked;hop 1: ok;hop 2: ok,cascade fail

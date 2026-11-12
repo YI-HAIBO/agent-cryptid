@@ -1,0 +1,112 @@
+{
+  "_readme": [
+    "智能体密码身份中台 —— 生产配置示例（v2.8）。",
+    "复制为 config.json 后按需修改；不要提交含真实 key 摘要的文件到仓库。",
+    "",
+    "auth 段说明：",
+    "  keys 的每一项 key 是【明文 API Key 的 SM3 摘要（64 hex）】，不是明文。",
+    "  生成方式：python -c \"import sys; sys.path.insert(0,'proto'); from auth import sm3_hex; print(sm3_hex('你的明文key'))\"",
+    "  这样配置文件泄露也不会直接交出可用凭据。",
+    "  tenants 列表是该 key 可操作的租户；写 [\"*\"] 表示管理员（慎用）。",
+    "  auth.enabled=false 或 keys 为空 → 关闭鉴权（仅 demo/单测用）。",
+    "",
+    "客户端携带方式（二选一）：",
+    "  X-API-Key: <明文key>",
+    "  Authorization: Bearer <明文key>",
+    "",
+    "allowed_algs 四档（v2.8）：",
+    "  sm2            GB/T 32918.2 短效凭证，7ms 签名 / 3ms 验签",
+    "  sm9            GB/T 38635 无证书标识，152ms 签名 / 221ms 验签",
+    "  sm2-ml-dsa     SM2 + ML-DSA 混合（中期凭证，抗量子）",
+    "  hash-signature 长存证离线冷签（存证场景）",
+    "",
+    "v2.8 起 SM9 与 SM2 完全并行：签发方只持 ks，验签方只知 P_pub 与 ID，",
+    "无需下发用户公钥——适配海量、分钟级生灭的智能体命名空间。"
+  ],
+
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8000,
+    "db": "/var/lib/agent-cryptid/state.db",
+    "default_tenant": "default",
+    "transport": "asgi",
+    "notes": "生产用 asgi（uvicorn）；stdlib http.server 仅供 demo/测试"
+  },
+
+  "auth": {
+    "enabled": true,
+    "keys": {
+      "REPLACE_WITH_SM3_HEX_OF_YOUR_ADMIN_KEY": {
+        "tenants": ["*"],
+        "note": "平台管理员：可操作任意租户，仅运维/审计使用"
+      },
+      "REPLACE_WITH_SM3_HEX_OF_ACME_KEY": {
+        "tenants": ["acme-prod"],
+        "note": "Acme 产线控制面：只允许操作 acme-prod"
+      },
+      "REPLACE_WITH_SM3_HEX_OF_GLOBEX_KEY": {
+        "tenants": ["globex-prod", "globex-dev"],
+        "note": "Globex：产线与开发两个租户"
+      }
+    }
+  },
+
+  "tenant_defaults": {
+    "default_scope": [],
+    "max_ttl_seconds": 3600,
+    "allowed_algs": ["sm2", "sm9", "sm2-ml-dsa", "hash-signature"],
+    "max_delegation_depth": 16,
+    "notes": "v2.11 FR3-04：None=不限制；生产建议 8~16；压测需高深度时显式调高"
+  },
+
+  "governance": {
+    "alert_window_seconds": 3600,
+    "alert_threshold": 5,
+    "notes": "v2.11 FR6-05：窗口内同 reason 校验失败 ≥ 阈值即告警"
+  },
+
+  "observability": {
+    "log_level": "INFO",
+    "metrics_prefix": "ac",
+    "health_check_dependencies": true,
+    "notes": "v2.10 NFR-10：/health 支持 liveness|readiness；/metrics 暴露 Prometheus 文本"
+  },
+
+  "revocation": {
+    "mode": "merkle-accumulator",
+    "capacity": 1024,
+    "snapshot_interval_seconds": 60,
+    "state_persistence": true,
+    "notes": "v2.4 起累加器状态直接持久化到 revocation_state 表，重启 O(1) 恢复；状态损坏时自动退化为 replay 重建"
+  },
+
+  "audit": {
+    "retention_days": 90,
+    "chain_verify_on_query": true,
+    "anchor": {
+      "enabled": true,
+      "mode": "sm2-signature",
+      "notes": "v2.2 起审计链根可签名锚定（上链存证雏形）；v3.0 换成真链 txid"
+    }
+  },
+
+  "nonce": {
+    "store": "sqlite",
+    "ttl_seconds": 86400,
+    "notes": "单机用 sqlite；多副本/集群换成 redis（装 redis 库后自动可用）"
+  },
+
+  "performance_targets": {
+    "issue_p99_ms": 50,
+    "verify_local_ms": 5,
+    "chain_verify_10hops_ms": 100,
+    "tpc": 5000
+  },
+
+  "notes": [
+    "allowed_algs 四档对应《技术方案》：短效 sm2 / 无证书 sm9 / 中期 sm2-ml-dsa 混合 / 长存证 hash-signature",
+    "performance_targets 对齐《产品需求文档》NFR-01…NFR-04",
+    "v2.5 起生产必须开 auth.enabled=true，否则任何拿到端口的人可换 X-Tenant-Id 横向越权",
+    "v2.8 起 SM9 与 SM2 完全并行，wire 格式用 sig_s_x/sig_s_y（SM9）或 sig_s（SM2）"
+  ]
+}

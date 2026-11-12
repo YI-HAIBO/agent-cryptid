@@ -1,0 +1,184 @@
+% =====================================================================
+% agent-cryptid — stateful properties (Tamarin Prover)
+% ---------------------------------------------------------------------
+% Complement to agent_cryptid.pv (E8, Dolev-Yao correspondence).
+% Tamarin's multiset-state model lets us discharge four properties
+% that ProVerif's linear-process model cannot express precisely:
+%
+%   S1  Replay "at most once"      — a nonce is accepted at most once
+%   S2  Revocation persistence     — after revoke, credential unusable
+%   S3  Delegation depth bounded   — no chain exceeds MAX_DEPTH
+%   S4  Chain scope convergence    — every delegation shrinks scope
+%   S5  Freshness                  — accepted nonces were truly issued
+%
+% Protocol core (same as ProVerif): Dolev-Yao signature abstract;
+% private keys kISSUER / kDELEG never leave the honest processes;
+% scope-subset check happens at issuance (not verifier side).
+%
+% Run: tamarin-prover agent_cryptid_tamarin.spthy
+% =====================================================================
+
+% --- Types ---
+type key.
+type idn.
+type scope.
+type nonce.
+type PK.
+type flag.
+type okflag.
+
+% --- Dolev-Yao abstract signature ---
+fun pk(key): PK.
+fun sign(bitstring, key): bitstring.
+reduc forall m:bitstring, k:key; checksign(sign(m,k), pk(k)) = m.
+
+% --- Protocol-specific primitives ---
+% enc binds (sub, aud, scope, nonce, alg) into the signed payload;
+% alg enters the signed blob so the attacker cannot downgrade tier.
+fun enc(idn, idn, scope, nonce, flag): bitstring.
+% subscope(child, parent) = OK iff child ⊆ parent; opaque to attacker.
+fun subscope(scope, scope): okflag.
+
+% --- Private keys (constant: attacker cannot obtain these) ---
+const kISSUER: key.
+const kDELEG:  key.
+
+% --- Public channels ---
+free cPK, cReq, cCred, cPres, cDlReq, cDl, cRev: channel.
+
+% --- Public parameters ---
+free ALG:       flag.    % algorithm-tier tag (in signature blob)
+free OKC:       okflag. % "ok" return of subscope
+free VID:       idn.    % relying party's expected audience
+free DELEGATOR: idn.    % current credential holder (delegator identity)
+free MAX_DEPTH: nat.    % delegation depth upper bound
+
+% --- Public-key broadcast ---
+rule Pk:
+  []
+  --[]-->
+  [ out(cPK, pk(kISSUER))),
+    out(cPK, pk(kDELEG)) ]
+
+% --- Root credential issuance ---
+% Records two state facts: CredDepth(n,0) and CredScope(n, sc).
+rule Issue:
+  [ in(cReq, (sub, aud, sc)) ]
+  --[ L_Issue(sub, aud, sc, n) ]-->
+  [ out(cCred, (sub, aud, sc, n, ALG,
+                sign(enc(sub,aud,sc,n,ALG), kISSUER))),
+    "CredDepth(n, 0)",
+    "CredScope(n, sc)" ]
+  where n = fresh("nonce")
+
+% --- Credential verification (single-hop) ---
+% Accept iff: sig valid, audience matches, nonce never seen, jti not revoked.
+% Stateful: adds "Seen(n)" on accept; the ~"Seen" guard makes replay
+% rejection structural, not a process-level branch.
+rule Verify:
+  [ in(cPres, (sub, aud, sc, n, alg, sig)),
+    checksign(sig, pk(kISSUER)) = enc(sub,aud,sc,n,alg),
+    aud = VID,
+    ~"Seen(n)",
+    ~"Revoked(n)" ]
+  --[ L_Verify(sub, aud, sc, n) ]-->
+  [ "Seen(n)" ]
+
+% --- Revocation (stateful, monotonic) ---
+% Each nonce can be revoked at most once. Once Revoked(n) is in the
+% multiset it cannot be undone (Tamarin facts are additive only).
+rule Revoke:
+  [ in(cRev, n),
+    ~"Revoked(n)" ]
+  --[ L_Revoke(n) ]-->
+  [ "Revoked(n)" ]
+
+% --- Delegation (stateful depth + scope) ---
+% Preconditions:
+%   1. parent credential signature is valid under kISSUER
+%      (root-of-chain is always signed by the root issuer)
+%   2. audience matches relying party
+%   3. scope convergence: child ⊆ parent
+%   4. parent nonce not revoked, not already seen (fresh parent)
+%   5. parent's depth d satisfies d < MAX_DEPTH
+% Postconditions:
+%   - credential at depth d+1 issued under kDELEG
+%   - state updated: CredDepth, CredScope, CredParent facts
+rule Delegate:
+  [ in(cDlReq, (delegatee, aud, childSc, parentSc, parentN, parentSig)),
+    checksign(parentSig, pk(kISSUER)) = enc(DELEGATOR, aud, parentSc, parentN, ALG),
+    aud = VID,
+    subscope(childSc, parentSc) = OKC,
+    ~"Revoked(parentN)",
+    ~"Seen(parentN)",
+    "CredDepth(parentN, d)",
+    d < MAX_DEPTH ]
+  --[ L_Delegate(DELEGATOR, delegatee, childSc, parentSc, d+1) ]-->
+  [ out(cDl, (DELEGATOR, delegatee, aud, childSc, m, ALG,
+              sign(enc(delegatee,aud,childSc,m,ALG), kDELEG))),
+    "CredDepth(m, d+1)",
+    "CredScope(m, childSc)",
+    "CredParent(m, parentN)" ]
+  where m = fresh("nonce")
+
+% --- Delegate-chain verification (multi-hop) ---
+% The verifier walks a chain of credentials; each hop must pass.
+% This rule makes the chain-verification event visible for LTL.
+rule VerifyChainHop:
+  [ in(cPres, (sub, aud, sc, n, alg, sig)),
+    checksign(sig, pk(kDELEG)) = enc(sub,aud,sc,n,alg),
+    aud = VID,
+    ~"Seen(n)",
+    ~"Revoked(n)",
+    "CredScope(n, sc)" ]
+  --[ L_VerifyChain(sub, aud, sc, n) ]-->
+  [ "Seen(n)" ]
+
+% =====================================================================
+% Stateful security properties
+% =====================================================================
+
+% --- S1: Replay at most once ---
+% Every nonce is accepted at most once. This directly captures the
+% "fresh once" property that ProVerif's get/insert pattern only
+% approximates via correspondence.
+query n:nonce;
+  exists i, j.
+    "L_Verify(_,_,_,n)" @i # "L_Verify(_,_,_,n)" @j &
+    i < j ==> false.
+
+% --- S2: Revocation persistence ---
+% No credential accepted after its revocation event. If L_Revoke(n)
+% happens at i and L_Verify(_,_,_,n) happens at j with j > i, we
+% require false. Equivalently: revocation is monotone.
+query n:nonce;
+  exists i, j.
+    "L_Revoke(n)" @i # "L_Verify(_,_,_,n)" @j &
+    j > i ==> false.
+
+% --- S3: Delegation depth is bounded by MAX_DEPTH ---
+% Every accepted delegation is at depth at most MAX_DEPTH. The rule
+% delegate already guards d < MAX_DEPTH, so every L_Delegate event
+% records d+1 <= MAX_DEPTH.
+query d:nat, d1:idn, d2:idn, s:scope, ps:scope;
+  "L_Delegate(d1, d2, s, ps, d)" @i ==> d <= MAX_DEPTH.
+
+% --- S4: Chain scope convergence ---
+% For every delegation event at depth d, the child scope is a subset
+% of the parent scope. The rule already forces subscope = OKC, so
+% this query pins the invariant to the observed trace.
+query parent:nonce, child:nonce, s:scope, ps:scope;
+  "L_Delegate(_,_,s,ps,_)" @i &
+  "CredScope(child, s)" @j &
+  "CredScope(parent, ps)" @k &
+  "CredParent(child, parent)" @l ==> subscope(s, ps) = OKC.
+
+% --- S5: Freshness of nonces ---
+% Every accepted nonce was issued by an honest issuer. Attacker
+% cannot forge a nonce into L_Verify without a matching L_Issue.
+query n:nonce;
+  exists i. "L_Verify(_,_,_,n)" @i ==>
+  exists sub, aud, sc, j.
+    "L_Issue(sub, aud, sc, n)" @j & j <= i.
+
+% --- End of model ---

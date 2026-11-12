@@ -1,0 +1,4 @@
+n_authorizations,setup_amortized_ms,verify_median_ms,peruse_median_ms,peruse_p99_ms
+100,3.9458,27.4,31.346,380.511
+1000,0.3946,27.4,27.795,376.96
+10000,0.0395,27.4,27.439,376.604

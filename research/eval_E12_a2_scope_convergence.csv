@@ -1,0 +1,3 @@
+enforce,legal_ok,escalation_ok,escalation_reason
+True,True,False,scope escalation
+False,True,True,

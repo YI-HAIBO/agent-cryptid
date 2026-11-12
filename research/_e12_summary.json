@@ -1,0 +1,99 @@
+{
+  "A1_identification": {
+    "sm2": {
+      "tier": "sm2",
+      "size_B": 441,
+      "issue_median_ms": 114.39,
+      "issue_p95_ms": 142.543,
+      "verify_median_ms": 116.176,
+      "verify_p95_ms": 172.398
+    },
+    "sm9": {
+      "tier": "sm9",
+      "size_B": 522,
+      "issue_median_ms": 629.041,
+      "issue_p95_ms": 803.838,
+      "verify_median_ms": 658.872,
+      "verify_p95_ms": 817.661
+    },
+    "ratio_issue_sm2_over_sm9": 0.182,
+    "ratio_verify_sm2_over_sm9": 0.176,
+    "ratio_issue_sm9_over_sm2": 5.499,
+    "ratio_verify_sm9_over_sm2": 5.671,
+    "ratio_size_sm9_over_sm2": 1.184,
+    "conclusion": "反直觉：SM9 tier 的签发/验签延迟是 SM2 tier 的 5.5× / 5.7×（纯 Python 实现下 bilinear pairing 远比 SM2 的标量乘昂贵），凭证体积亦更大（SM9 522B vs SM2 441B）。SM9 的实际收益不在计算速度或体积，而在**无证书**特性——公钥可直接从身份字符串派生，省去 X.509 证书链的存储与管理开销；但代价是需要 KGC 密钥托管（见 §5.4 密钥托管专段）。部署选型上：资源受限且无证书基础设施的场景宜用 SM9，延迟敏感的场景宜用 SM2 tier + X.509 标识"
+  },
+  "A2_scope_convergence": {
+    "enforce_on": {
+      "enforce": true,
+      "legal_ok": true,
+      "escalation_ok": false,
+      "escalation_reason": "scope escalation",
+      "escalation_note": ""
+    },
+    "enforce_off": {
+      "enforce": false,
+      "legal_ok": true,
+      "escalation_ok": true,
+      "escalation_reason": null,
+      "escalation_note": "scope check bypassed"
+    },
+    "conclusion": "收敛开启时 scope 升级被拒（scope escalation）；关闭时越权凭证被签发 —— 证明 scope 收敛是防止权限升级攻击的必要条件"
+  },
+  "A3_revocation": {
+    "mode": "accumulator+blacklist",
+    "revoke_median_ms_acc": 788.375,
+    "verify_median_ms_acc": 69.727,
+    "verify_median_ms_blacklist": 0.0,
+    "acc_current_root_bytes": 64,
+    "blacklist_entry_bytes": 24,
+    "blacklist_total_bytes_20": 480,
+    "conclusion": "累加器验证比黑名单慢 +69.7 ms（签名外开销），但证明体积固定 O(log N) 且不随撤销数增长；黑名单验证是 O(1) 但需在线查询、全表体积随撤销数线性增长，无法离线验证"
+  },
+  "A4_tier_structure": {
+    "perf": [
+      {
+        "tier": "sm2",
+        "issue_ok": true,
+        "size_B": 432,
+        "issue_median_ms": 66.772,
+        "verify_median_ms": 69.481,
+        "verify_p99_ms": 99.324
+      },
+      {
+        "tier": "sm2-ml-dsa",
+        "issue_ok": true,
+        "size_B": 12952,
+        "issue_median_ms": 490.281,
+        "verify_median_ms": 152.564,
+        "verify_p99_ms": 170.419
+      },
+      {
+        "tier": "hash-signature",
+        "issue_ok": true,
+        "size_B": 590,
+        "issue_median_ms": 207.676,
+        "verify_median_ms": 253.486,
+        "verify_p99_ms": 338.577
+      }
+    ],
+    "downgrade": [
+      {
+        "tier": "sm2-ml-dsa",
+        "tampered_alg_tier": "sm2",
+        "stripped_pq": true,
+        "verified_ok": false,
+        "reason": "signature invalid"
+      },
+      {
+        "tier": "hash-signature",
+        "tampered_alg_tier": "sm2",
+        "stripped_pq": true,
+        "verified_ok": false,
+        "reason": "missing signature"
+      }
+    ],
+    "conclusion": "三档共存（SM2/hybrid/SLH-DSA）在延迟与体积上按预期递增；混合与哈希签名档的降级攻击（剥 PQ 分量并伪装 SM2 tier）全部被拒 —— 证明 alg_tier 被签名覆盖 + PQ 分量必须验证 构成了不可绕过的降级防线",
+    "downgrade_all_rejected": true
+  }
+}

@@ -1,0 +1,13 @@
+threat,attack,rejected,mechanism
+重放攻击,同一凭证二次出示(record_nonce),True,nonce 一次性(NonceStore)
+跨服务挪用/受众混淆,以错误 audience 校验,True,aud 受众字段绑定+校验
+签名伪造,翻转 SM2 签名分量 s,True,SM2 签名(ECDSA over ZA||M)
+载荷篡改·越权scope,签发后扩大 scope,True,签名覆盖 scope
+载荷篡改·主体替换,偷换凭证主体 sub,True,签名覆盖 sub
+载荷篡改·延长期效,篡改 exp 延长有效期,True,签名覆盖 exp
+缺失签名分量,删除 SM2 签名分量,True,签名存在性检查
+委托权限越权,子级 scope 超出父级,True,委托 scope 收敛校验
+委托链受众不匹配,以错误受众校验委托链,True,链上受众一致性
+撤销绕过,撤销后仍尝试使用,True,累加器撤销+jti 黑名单
+过期凭证,now 超过 exp,True,exp 时效检查
+未生效凭证,now 早于 nbf,True,nbf 生效检查

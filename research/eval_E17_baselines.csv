@@ -1,0 +1,4 @@
+scheme,verify_median_ms,verify_p95_ms,verify_p99_ms,note
+agent-cryptid (3-hop chain),22.61,27.467,33.015,scope 收敛 + 委托链
+baseline A: 无身份层 (re-auth/use),25.233,30.535,33.224,每次回 CA 重签
+baseline B: 扁平凭证 (standalone),12.469,15.072,17.805,无 scope 收敛保障

@@ -1,0 +1,179 @@
+(* =====================================================================
+   agent-cryptid 核心协议的形式化模型（ProVerif）  — E8 草案
+   ---------------------------------------------------------------------
+   面向 SCI 一区论文“形式化验证 / Formal Verification”一节。
+
+   建模范围（agent-cryptid 四层能力中的“凭证—委托”两层核心）：
+     - 凭证签发：issuer 以私钥对 {sub, aud, scope, nonce, alg_tier} 签名
+       （纯 SM2 档用 kISSUER；混合档用 kISSUER + kISSUER2 双签）
+     - 凭证出示 + 依赖方校验：验签 + 受众绑定 + nonce 一次性（重放防护）
+     - 混合档失败关闭：SM2 与 ML-DSA 两个分量都验过才接受（显式 AND）
+     - 委托签发 + 链式校验：每跳验签 + 受众一致 + scope 收敛 + 委托不可伪造
+
+   密码抽象与假设：
+     - 数字签名方案 EUF-CMA（SM2 / ML-DSA 混合档均归约到各自签名不可伪造；
+       混合档“失败关闭”等价于两个 EUF-CMA 签名同时成立）
+     - 哈希 = 随机预言（本模型以 h 预留，correspondence 证明不依赖 RO）
+     - nonce 全局唯一且每次新鲜生成
+     - Dolev-Yao 攻击者完全控制网络（公钥公开，可重放/篡改/拼接任意消息）
+
+   不在本模型内（属确定性检查或状态化性质，另由 E3 威胁驱动测评覆盖）：
+     - 时效 nbf/exp、撤销（累加器 + jti 黑名单）、控制面鉴权
+     - 重放“至多接受一次”的状态计数（建议以 Tamarin 多重集推理补强，见 README）
+
+   运行：  proverif agent_cryptid.pv
+   预期：  下列全部 query 均被证明（RESULT: All queries proved / 无攻击轨迹）
+   ===================================================================== *)
+
+(* ------------------------------- 类型 ------------------------------- *)
+type key.
+type idn.          (* 主体 / 签发方 / 受众标识 *)
+type scope.        (* 权限集合（抽象项） *)
+type nonce.        (* 一次性随机数 *)
+type PK.
+type flag.         (* 算法档位标签：sm2 / sm2-ml-dsa / hash-signature *)
+type okflag.       (* scope 收敛判定结果：ok / err *)
+
+(* ----------------------------- 密码函数 ----------------------------- *)
+fun pk(key): PK.
+fun sign(bitstring, key): bitstring.
+reduc forall m:bitstring, k:key; checksign(sign(m,k), pk(k)) = m.
+
+(* 凭证体编码：明文字段 + 算法档位 编成待签消息。
+   档位 alg 进入签名覆盖 ⇒ 防止“降级攻击”（把混合档伪装成纯 SM2）。 *)
+fun enc(idn, idn, scope, nonce, flag): bitstring.   (* enc(sub, aud, scope, nonce, alg) *)
+
+(* scope 收敛谓词：subscope(child, parent) = OK 当且仅当 child ⊆ parent。
+   形式化重点在“链上不可扩张”；该包含关系由委托签发策略保证，
+   校验端以此谓词复核（语义保真度讨论见 README §6）。 *)
+fun subscope(scope, scope): okflag.
+
+(* ------------------------------- 事件 ------------------------------- *)
+(* correspondence 性质所依赖的执行轨迹事件 *)
+event beginIssue(idn, idn, scope).      (* 签发方签发 (sub, aud, scope) *)
+event endVerify(idn, idn, scope).       (* 依赖方接受 (sub, aud, scope) *)
+event beginDelegate(idn, idn, scope).   (* 委托方发起 (delegatee, childScope) *)
+event endDelegate(idn, idn, scope).     (* 链校验端接受该委托 *)
+event issueNonce(nonce).                (* 签发方生成某 nonce *)
+event acceptNonce(nonce).               (* 依赖方首次接受某 nonce *)
+
+(* ---------------------------- 长期密钥 ------------------------------ *)
+(* [private] ⇒ ProVerif 证明其对攻击者不可导出 *)
+free kISSUER:  key [private].   (* 根签发方 SM2 签名私钥 *)
+free kISSUER2: key [private].   (* 根签发方 ML-DSA 签名私钥（混合档第二分量） *)
+free kDELEG:   key [private].   (* 委托方身份签名私钥 *)
+query attacker(kISSUER).
+query attacker(kISSUER2).
+query attacker(kDELEG).
+
+(* --------------------------- 安全性质查询 --------------------------- *)
+(* P1 凭证不可伪造 + 受众绑定 + 载荷(scope)完整：
+   依赖方接受 (sub,aud,scope) ⇒ 必存在签发方对同一 (sub,aud,scope) 的签发事件。
+   一条 correspondence 同时覆盖：签名不可伪造、scope 不可篡改、
+   aud 与校验端期望一致（受众绑定/防跨服务挪用）。
+   注：混合档校验分支中 endVerify 仅在 SM2 与 ML-DSA 两个 checksign 都通过后才触发，
+   故 P1 同时形式化「失败关闭」——任一分量被破坏即无法 endVerify（凭证被拒）。
+   这与 E9 定理 2（Adv ≤ min(Adv_SM2, Adv_MLDSA)）互为印证。 *)
+query x1:idn, x2:idn, s:scope;
+  event(endVerify(x1,x2,s)) ==> event(beginIssue(x1,x2,s)).
+
+(* P2 委托不可伪造：链校验端接受某委托 ⇒ 必由委托方真实发起。 *)
+query d1:idn, d2:idn, s:scope;
+  inj-event(endDelegate(d1,d2,s)) ==> inj-event(beginDelegate(d1,d2,s)).
+
+(* P3 nonce 真实性：被接受的 nonce 必由签发方生成
+   （与 seen 表配合实现重放防护；至多一次的状态计数见 README）。 *)
+query n:nonce;
+  event(acceptNonce(n)) ==> event(issueNonce(n)).
+
+(* ----------------------------- 通道/常量 ---------------------------- *)
+free cPK, cReq, cCred, cPres, cCredH, cPresH, cDlReq, cDl: channel.
+free ALG:  flag.        (* 抽象：单一档位标签；档位进签名覆盖 *)
+free OKC:  okflag.      (* subscope 收敛的“ok”返回值 *)
+free VID:  idn.         (* 本依赖方期望的受众 aud（校验端固定值） *)
+free DELEGATOR: idn.    (* 委托方标识 *)
+
+(* 依赖方已见 nonce 集合（重放防护的状态） *)
+table seen(nonce).
+
+(* ============================== 进程 ============================== *)
+process
+  (* 公布签名公钥；私钥永不外泄 *)
+  out(cPK, pk(kISSUER));
+  out(cPK, pk(kISSUER2));
+  out(cPK, pk(kDELEG));
+  (
+    (* ---- 根凭证签发方 ---- *)
+    ! in(cReq, (sub:idn, aud:idn, scope:scope));
+        new n:nonce;
+        event issueNonce(n);
+        event beginIssue(sub, aud, scope);
+        (* 凭证 = 明文字段 + 对 enc(...) 的签名；网络公开可被攻击者读取/重放 *)
+        out(cCred, (sub, aud, scope, n, ALG, sign(enc(sub,aud,scope,n,ALG), kISSUER)))
+  )
+  |
+  (
+    (* ---- 依赖方：验签 + 受众绑定 + nonce 一次性 ---- *)
+    ! in(cPres, (sub:idn, aud:idn, scope:scope, n:nonce, alg:flag, sig:bitstring));
+        if checksign(sig, pk(kISSUER)) = enc(sub,aud,scope,n,alg) then
+          if aud = VID then
+            get seen(=n) in
+              0                       (* 重放：nonce 已见 ⇒ 静默丢弃 *)
+            else
+              insert seen(n);
+              event acceptNonce(n);
+              event endVerify(sub, aud, scope)
+          else 0                       (* 受众不匹配 ⇒ 拒绝 *)
+        else 0                         (* 验签失败 ⇒ 拒绝 *)
+  )
+  |
+  (
+    (* ---- 委托签发方：持父凭证(scope=pscope)，签发子凭证(childScope) ---- *)
+    ! in(cDlReq, (delegatee:idn, aud:idn, childScope:scope, pscope:scope));
+        if subscope(childScope, pscope) = OKC then
+          new m:nonce;
+          event beginDelegate(DELEGATOR, delegatee, childScope);
+          out(cDl, (DELEGATOR, delegatee, aud, childScope, m, ALG,
+                    sign(enc(delegatee,aud,childScope,m,ALG), kDELEG)))
+        else 0                         (* 子 scope 超集 ⇒ 拒绝签发（收敛不变量） *)
+  )
+  |
+  (
+    (* ---- 链校验端：验签 + 受众一致 ⇒ 接受委托 ---- *)
+    ! in(cDl, (deleg:idn, delegatee:idn, aud:idn, childScope:scope,
+               m:nonce, alg:flag, sig:bitstring));
+        if checksign(sig, pk(kDELEG)) = enc(delegatee,aud,childScope,m,alg) then
+          if aud = VID then
+            event endDelegate(deleg, delegatee, childScope)
+          else 0
+        else 0
+  )
+  |
+  (
+    (* ---- 混合档签发：SM2 分量(kISSUER) + ML-DSA 分量(kISSUER2) 双签 ---- *)
+    ! in(cReq, (sub:idn, aud:idn, scope:scope));
+        new n:nonce;
+        event issueNonce(n);
+        event beginIssue(sub, aud, scope);
+        out(cCredH, (sub, aud, scope, n, ALG,
+                     sign(enc(sub,aud,scope,n,ALG), kISSUER),
+                     sign(enc(sub,aud,scope,n,ALG), kISSUER2)))
+  )
+  |
+  (
+    (* ---- 混合档校验（失败关闭）：两个分量都必须验过才 endVerify ---- *)
+    ! in(cPresH, (sub:idn, aud:idn, scope:scope, n:nonce, alg:flag,
+                  s1:bitstring, s2:bitstring));
+        if checksign(s1, pk(kISSUER)) = enc(sub,aud,scope,n,alg) then
+          if checksign(s2, pk(kISSUER2)) = enc(sub,aud,scope,n,alg) then
+            if aud = VID then
+              get seen(=n) in
+                0                     (* 重放 ⇒ 拒 *)
+              else
+                insert seen(n);
+                event acceptNonce(n);
+                event endVerify(sub, aud, scope)
+            else 0                   (* 受众不匹配 ⇒ 拒 *)
+          else 0                     (* ML-DSA 分量失败 ⇒ 拒（失败关闭） *)
+        else 0                       (* SM2 分量失败 ⇒ 拒（失败关闭） *)
+  )

@@ -1,0 +1,7 @@
+backend,n,median_ms,q1_ms,q3_ms,p95_ms,min_ms,max_ms
+sm2.affine.sign,30,73.58,72.91,74.7,78.73,72.22,88.45
+sm2.affine.verify,30,174.36,165.12,185.44,214.43,154.54,223.75
+gmssl.c.sign,30,8.84,8.71,9.2,11.06,8.25,12.06
+gmssl.c.verify,30,23.76,23.5,24.28,25.08,22.6,26.47
+fast.jacobian.sign,30,3.28,3.25,3.35,3.39,3.15,3.41
+fast.jacobian.verify,30,7.93,7.65,8.22,9.15,7.49,11.48

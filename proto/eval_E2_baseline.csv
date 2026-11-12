@@ -1,0 +1,6 @@
+scheme,cred_size_B,verify_ms,revocation,pq_ready,hw_root,source
+X.509 (EC, 传统 PKI),1200,0.3,CRL/OCSP (在线),否,可选(HSM),文献代表值-待核实
+SPIFFE/SPIRE (X.509-SVID),1200,0.5,CA 轮换/在线,否,可选,CNCF SPIFFE perf suite (2025); cert verify ~0.5ms p50
+DID/VC (Ed25519+状态列表),2500,1.5,状态列表(在线/链上),否,否,MDPI Internet 2023 (IoT DID/VC); Ed25519 verify 1.5ms RPi
+OAuth2/OIDC + OPA,1000,12.0,令牌撤销/短期,否,否,Ory Hydra 2.0 benchmark; cached JWKS verify ~12ms p99
+agent-cryptid SM2,449,98.408,Merkle 累加器(离线证明),否,设计支持(FR1-06),本系统实测

@@ -1,0 +1,9 @@
+attempt_id,ok,reason
+1,False,nonce replay
+2,False,nonce replay
+3,False,nonce replay
+4,False,nonce replay
+5,False,nonce replay
+6,False,nonce replay
+7,False,nonce replay
+8,True,ok

@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- runtime / data artifacts ---
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*_report.txt
+*.tar.gz
+*.zip
+*.exe
+
+# --- tool binaries & VM artifacts (external tools, not the paper's code/data) ---
+research/_dl/
+research/_tools/
+research/_bench_out/
+research/formal/_dl/
+research/formal/_tools/
+research/integration/_dl/
+research/tck/_dl/
+
+# --- temp / scratch ---
+_tmp_zipcheck/
+_tmp_zipcheck2/
+*.tmp
+
+# --- node modules ---
+node_modules/
+research/integration/jsclient/node_modules/
+
+# --- scratch renders ---
+_pg*.png
+_cn_pg*.png
+
+# --- office backup / lock ---
+~$*.docx
+~$*.doc
+
+# nested external repo (A2A TCK), not part of this artifact
+research/tck/

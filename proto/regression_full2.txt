@@ -1,0 +1,126 @@
+[safe-delete][SAFE_DELETE_BULK_CONFIRM_REQUIRED] {"count":50,"threshold":50,"scope":"turn","targets":["C:\\Users\\Yi\\WorkBuddy\\2026-10-09-07-28-12\\agent-cryptid\\proto\\_v3_persist.db"],"targetCount":1}
+
+=== check_sm2 ===
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_sm2_report.txt
+RESULT  PASS=17  FAIL=0
+
+=== check_v01 ===
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v01_report.txt
+RESULT  PASS=26  FAIL=0
+
+=== check_v1 ===
+PASS     T1 跨租户标识不可见
+PASS     T2a tenant A 撤销成功
+PASS     T2b tenant A 校验被拒 (revoked)
+PASS     T2c tenant B 校验仍通过
+PASS     T2d 撤销版本号按租户独立 (A=1, B=0)
+PASS     T3 tenant A 审计只见 A 的 issuer
+PASS     T3b tenant B 审计只见 B 的 issuer
+PASS     T3c 两条审计链都自洽
+PASS     T4a tenant A 策略更新成功
+PASS     T4b tenant B 策略不受影响
+PASS     T4c tenant A ttl 被策略截断
+PASS     T5a 恢复后 tenant A 的标识仍在
+PASS     T5b 恢复后撤销 jti 仍在
+PASS     T5c 恢复后策略保留 max_ttl_seconds=60
+PASS     T5d 恢复后 revoked 凭证仍被拒
+PASS     T7 tenant A 版本=2, tenant B 版本=0
+PASS     T8 identities 表物理共 4 行
+PASS     T8b revocations 表物理共 2 行 (均来自 A)
+PASS     T8c audit_log 有数据
+SUMMARY  check_v1 PASS=19 FAIL=0
+C:\Users\Yi\WorkBuddy\2026-10-09-07-28-12\agent-cryptid\proto\check_v1_report.txt
+RESULT  PASS=19  FAIL=0
+
+=== sm2_fast ===
+
+FastSigner 性能（60 字节消息，60 次）
+  签名       中位   2.42   P95   2.57   P99   3.02 ms  (≤50)
+  验签 热态  中位   3.01   P95   3.15   P99   3.75 ms  (≤5)  ZA命中
+  验签 冷态  中位   3.86   P95   4.23   P99   4.44 ms  (≤5)  ZA重算
+PASS  FastSigner 签名自洽（fast.verify）
+PASS  篡改消息后验签失败
+PASS  篡改 r 后验签失败
+PASS  篡改 s 后验签失败
+PASS  换标识后验签失败（ZA 绑定）
+PASS  no-ZA 路径自洽
+PASS  自研仿射 verify 接受 fast 签名
+PASS  fast.verify 接受自研仿射签名
+PASS  gmssl 签名可被 fast.verify 接受（互操作）
+PASS  签名 中位+P95 ≤ 50ms（PRD NFR-01）
+PASS  验签热态 中位+P95 ≤ 5ms（PRD NFR-02）
+PASS  验签冷态 中位+P95 ≤ 5ms（PRD NFR-02）
+
+RESULT  PASS=12  FAIL=0
+RESULT  PASS=12  FAIL=0
+
+=== revocation ===
+PASS  空累加器 version=0
+PASS  空累加器 total=0
+PASS  空累加器 root=None
+PASS  revoke#1 version=1
+PASS  revoke#1 leaf_index=0
+PASS  proof(jti-001) 非空
+PASS  proof(jti-001) 验证通过
+PASS  proof(jti-001) jti 匹配
+PASS  proof(jti-001) jti 不匹配则失败
+PASS  proof(未撤销 jti) 返回 None
+PASS  proof(jti-001) 验证通过
+PASS  proof(jti-002) 验证通过
+PASS  proof(jti-003) 验证通过
+PASS  snapshot total=3
+PASS  snapshot version=3
+PASS  snapshot root 非空
+PASS  独立验证：最新 root 可验证证明
+PASS  篡改 leaf_hash 后验证失败
+PASS  篡改 sibling_path 后验证失败
+PASS  篡改 root 后验证失败
+PASS  填至满时 frozen_roots=0
+PASS  第 9 次撤销触发冻结
+PASS  冻结后 count=1
+PASS  冻结后 version=9
+PASS  冻结后 frozen_roots=1
+PASS  冻结后 total=9
+PASS  非 2 的幂 capacity 应拒绝
+PASS  重复 revoke 应拒绝
+PASS  state_dict → load_state 恢复成功
+PASS  恢复后 version 一致
+PASS  恢复后 count 一致
+PASS  恢复后根一致
+PASS  恢复后 proof(jti-009) 可验证
+PASS  恢复后 jti 索引完整
+PASS  容量不匹配应拒绝恢复
+PASS  损坏状态应拒绝恢复且不抛异常
+
+RESULT  PASS=36  FAIL=0
+RESULT  PASS=36  FAIL=0
+
+=== check_v2 ===
+PASS     A revoke 同步累加器
+PASS     B 快照含累加器根
+PASS     C 证明可独立验证
+PASS     D 未撤销返回 False
+PASS     E 跨租户隔离
+PASS     F 凭证校验兼容
+PASS     G 证明篡改检测
+PASS     H 持久化往返
+PASS     I 累加器重启恢复
+
+RESULT  PASS=9  FAIL=0
+RESULT  PASS=9  FAIL=0
+
+=== nonce_store ===
+PASS  MemoryNonceStore 基础 add/contains
+PASS  MemoryNonceStore 过期失效
+PASS  MemoryNonceStore __len__
+PASS  MemoryNonceStore cleanup
+PASS  SqliteNonceStore 基础
+PASS  SqliteNonceStore 过期失效
+PASS  SqliteNonceStore __len__
+PASS  SqliteNonceStore 跨连接持久化
+PASS  RedisNonceStore（跳过：未装 redis 库）
+
+RESULT  PASS=9  FAIL=0
+RESULT  PASS=9  FAIL=0
+
+=== check_v3 ===

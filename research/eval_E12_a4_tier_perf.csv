@@ -1,0 +1,4 @@
+tier,issue_ok,size_B,issue_median_ms,verify_median_ms,verify_p99_ms
+sm2,True,432,66.772,69.481,99.324
+sm2-ml-dsa,True,12952,490.281,152.564,170.419
+hash-signature,True,590,207.676,253.486,338.577

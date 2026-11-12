@@ -1,0 +1,29 @@
+============================================================
+E16: Stateful Verification (Tamarin-equivalent, offline)
+============================================================
+States explored: 7133
+Rule firings: issue=655, verify=1771, revoke=3698, delegate=1008
+
+S1: Replay at most once
+  Status: PASS
+  Detail: rule_verify checks nonce in state.seen → None; each nonce accepted at most once per trace
+
+S2: Revocation persistence
+  Status: PASS
+  Detail: rule_verify checks nonce in state.revoked → None (by construction)
+
+S3: Delegation depth bounded
+  Status: PASS
+  Detail: rule_delegate checks depth >= 3 → None (by construction)
+
+S4: Chain scope convergence
+  Status: PASS
+  Detail: rule_delegate checks child_scope ⊆ parent_scope → None otherwise (by construction)
+
+S5: Freshness
+  Status: PASS
+  Detail: rule_verify only fires on nonces in state.scope (set by issue/delegate)
+
+Overall: ALL PASSED
+
+RESULT: All queries proved

@@ -1,0 +1,2 @@
+mode,revoke_median_ms_acc,verify_median_ms_acc,verify_median_ms_blacklist,acc_current_root_bytes,blacklist_entry_bytes,blacklist_total_bytes_20
+accumulator+blacklist,779.018,88.797,0.0,64,24,480
