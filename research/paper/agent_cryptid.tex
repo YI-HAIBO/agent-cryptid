@@ -86,7 +86,7 @@ convergence in a single deployed system.
 % --- Keywords ---
 \begin{IEEEkeywords}
 Autonomous agents; identity management; post-quantum cryptography;
-cryptographic agility; fail-closed security; formal verification.
+cryptographic agility; fail-closed security; formal verification
 \end{IEEEkeywords}
 
 % =====================================================================
@@ -380,7 +380,8 @@ field is covered, preventing cross-service misuse).
 
 \subsection{Architecture Overview}
 
-Agent-cryptid consists of four layers, each with a well-defined interface:
+Agent-cryptid consists of four layers, each with a well-defined interface,
+as shown in Figure~\ref{fig:architecture}:
 
 \begin{figure}[t]
   \centering
@@ -431,7 +432,8 @@ The three cryptographic tiers are:
 \subsection{Layer 3: Delegation}
 
 Delegation creates a chain of credentials where each child's scope is a
-subset of its parent's scope (convergence). Each delegation hop is signed
+subset of its parent's scope (convergence), as illustrated in
+Figure~\ref{fig:delegation}. Each delegation hop is signed
 with the delegator's identity key. Chain verification checks every hop's
 signature, audience consistency, and scope convergence.
 
@@ -1016,7 +1018,7 @@ ECDSA verify primitive. All agent-cryptid verify times are quiet-machine VM
 measurements (Section~\ref{sec:setup}).
 
 \begin{table*}[t]
-  \caption{Baseline comparison of credential size, verify latency, and revocation mechanism.}
+  \caption{Baseline comparison of credential size, verify latency, and revocation mechanism}
   \label{tab:baseline}
   \centering\small
   \begin{tabular}{lcccc}
@@ -1074,7 +1076,7 @@ covers credential size, issuance/verification latency, delegation
 capability, revocation mechanism, and post-quantum readiness.
 
 \begin{table*}[t]
-  \caption{Real-baseline comparison on the same host (quiet machine, VM).}
+  \caption{Real-baseline comparison on the same host (quiet machine, VM)}
   \label{tab:realbaseline}
   \centering\small\setlength{\tabcolsep}{4pt}
   \begin{tabular}{lccccc}
@@ -1131,7 +1133,8 @@ on a matched 4-hop delegation chain (root + three delegations, each
 signed by a distinct agent identity): median verification
 \textbf{17.1~ms} with p99 at 19.1~ms, versus UCAN's 311.2~ms.
 Agent-cryptid is \textbf{18.2$\times$ faster per hop} at equal
-chain depth (4.3~ms/hop vs.\ 77.8~ms/hop). The gap comes from
+chain depth (4.3~ms/hop vs.\ 77.8~ms/hop), as shown in
+Figure~\ref{fig:perf}. The gap comes from
 protocol structure rather than signature speed (both use SM2 as the
 asymmetric primitive): agent-cryptid's scope convergence and audience
 binding are checked as set-containment operations inside a single
@@ -1141,12 +1144,12 @@ fresh asymmetric verification with no shared context.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.92\columnwidth]{fig_performance.pdf}
-  \caption{Delegation-chain verification latency versus chain depth on the quiet machine.}
+  \caption{Delegation-chain verification latency versus chain depth on the quiet machine}
   \label{fig:perf}
 \end{figure}
 
 \begin{table}[h!]
-\caption{Verification cost decomposed by underlying cryptographic primitive.}
+\caption{Verification cost decomposed by underlying cryptographic primitive}
 \label{tab:primitive}
 \centering\small\setlength{\tabcolsep}{5pt}
 \begin{tabular}{lrc}
@@ -1191,7 +1194,7 @@ component or spoofing the tier tag is rejected). Table~\ref{tab:migration}
 summarizes the migration verification results.
 
 \begin{table*}[t]
-  \caption{Crypto-agility migration verification.}
+  \caption{Crypto-agility migration verification}
   \label{tab:migration}
   \centering\small
   \begin{tabular}{lcc}
@@ -1230,7 +1233,7 @@ SUT and the same token but suppresses injection, isolating authentication
 as the single varying factor.
 
 \begin{table}[t]
-  \caption{Official A2A TCK conformance matrix across four deployment modes.}
+  \caption{Official A2A TCK conformance matrix across four deployment modes}
   \label{tab:tck}
   \centering\small\setlength{\tabcolsep}{3pt}
   \begin{tabular}{lccccc}
@@ -1337,7 +1340,7 @@ computational cost, while independent interpreters can.
 
 \begin{table}[t]
   \caption{Issuance throughput (TPS) under thread- vs.\ process-level
-    parallelism (idle host, steady-state segment).}
+    parallelism (idle host, steady-state segment)}
   \label{tab:parallel}
   \centering\small\setlength{\tabcolsep}{3pt}
   \begin{tabular}{lcccccc}
@@ -1607,7 +1610,7 @@ samples after a warm-up---and report the median of the run-level
 medians with a 95\% CI of the mean and the coefficient of variation.
 
 \begin{table}[h!]
-\caption{Five-run distribution of run-level median latencies on the loaded host.}
+\caption{Five-run distribution of run-level median latencies on the loaded host}
 \label{tab:e14}
 \centering\small\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrrr}
@@ -1768,7 +1771,7 @@ therefore no cryptographic scope convergence. Table~\ref{tab:e17}
 shows the per-authorization verification cost.
 
 \begin{table}[h!]
-  \caption{Per-authorization latency in the CI/CD case study (loaded-host medians).}
+  \caption{Per-authorization latency in the CI/CD case study (loaded-host medians)}
   \label{tab:e17}
   \centering\small\setlength{\tabcolsep}{4pt}
   \begin{tabular}{lcc}
@@ -1780,14 +1783,13 @@ shows the per-authorization verification cost.
     baseline (b) flat & 12.5 & 17.8 \\
     \bottomrule
   \end{tabular}
-  \par\vspace{4pt}
-  \small\raggedright
-  \textit{Note:} agent-cryptid provides scope convergence and delegation
-  with revocation cascade. Baseline (a) loses delegation reuse
-  (re-authenticates each use); baseline (b) loses scope convergence
-  (flat full-scope credential). Relative ordering is stable across
-  runs; see E14 for the host-noise characterisation.
 \end{table}
+
+agent-cryptid provides scope convergence and delegation with revocation
+cascade. Baseline (a) loses delegation reuse (re-authenticates each use);
+baseline (b) loses scope convergence (flat full-scope credential).
+Relative ordering is stable across runs; see E14 for the host-noise
+characterisation.
 
 The key result is that agent-cryptid's per-authorization cost
 (22.6~ms) is \emph{lower} than re-authenticating each time
@@ -1843,13 +1845,13 @@ separation, and revocation is offline via a Merkle accumulator.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.94\textwidth]{fig_deployment_topology.pdf}
-  \caption{End-to-end deployment of the cryptid identity layer at the A2A/MCP boundary.}
+  \caption{End-to-end deployment of the cryptid identity layer at the A2A/MCP boundary}
   \label{fig:deployment}
 \end{figure*}
 
 \begin{table}[t]
   \caption{E19 deployment metrics (quiet-machine VM, median of three
-    runs, $n=150$--$200$ round-trips).}
+    runs, 150--200 round trips)}
   \label{tab:e19}
   \centering\small\setlength{\tabcolsep}{4pt}
   \begin{tabular}{lcc}
